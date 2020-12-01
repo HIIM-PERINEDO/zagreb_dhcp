@@ -1,5 +1,5 @@
 # zagreb_dhcp
-These are dHCP inspired processing pipelines neonatal MRI 
+These are dHCP inspired processing pipelines for neonatal MRI 
  
 This is the repository can go inside the /code folder within of a BIDS studyfolder
 
