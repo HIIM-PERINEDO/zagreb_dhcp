@@ -155,15 +155,102 @@ cd $currdir
 
 # Pmap GM
 if [ ! -f $neo5ttdir/${T2N4}-Pmap-GM.nii.gz ]; then
-    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/gm/$T2.nii.gz $neo5ttdir/${T2N4}-Pmap-GM.nii.gz
+#    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/gm/$T2.nii.gz $neo5ttdir/${T2N4}-Pmap-GM.nii.gz
+    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/seg1/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg2/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg3/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg4/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg5/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg6/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg7/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg8/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg9/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg10/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg11/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg12/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg13/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg14/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg15/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg16/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg20/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg21/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg22/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg23/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg24/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg25/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg26/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg27/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg28/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg29/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg30/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg31/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg32/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg33/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg34/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg35/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg36/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg37/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg38/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg39/$T2.nii.gz \
+	     $neo5ttdir/${T2N4}-Pmap-GM.nii.gz  
 fi
 # Pmap CSF
 if [ ! -f $neo5ttdir/${T2N4}-Pmap-CSF.nii.gz ]; then
-    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/csf/$T2.nii.gz $neo5ttdir/${T2N4}-Pmap-CSF.nii.gz
+#    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/csf/$T2.nii.gz $neo5ttdir/${T2N4}-Pmap-CSF.nii.gz  
+    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/seg49/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg50/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg83/$T2.nii.gz \
+	     $neo5ttdir/${T2N4}-Pmap-CSF.nii.gz
 fi
 # Pmap WM
 if [ ! -f $neo5ttdir/${T2N4}-Pmap-WM.nii.gz ]; then
-    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/wm/$T2.nii.gz $neo5ttdir/${T2N4}-Pmap-WM.nii.gz
+    #    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/wm/$T2.nii.gz $neo5ttdir/${T2N4}-Pmap-WM.nii.gz
+    fslmaths $segdir/sub-$sID/ses-$ssID/posteriors/seg19/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg51/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg52/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg53/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg54/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg55/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg56/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg57/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg58/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg59/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg60/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg61/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg62/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg63/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg64/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg65/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg66/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg67/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg68/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg69/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg70/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg71/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg72/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg73/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg74/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg75/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg76/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg77/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg78/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg79/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg80/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg81/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg82/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg85/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg48/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg40/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg41/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg42/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg43/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg44/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg45/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg46/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg47/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg86/$T2.nii.gz \
+	     -add $segdir/sub-$sID/ses-$ssID/posteriors/seg87/$T2.nii.gz \
+	     $neo5ttdir/${T2N4}-Pmap-WM.nii.gz
 fi
 # Pmap subcortical GM
 if [ ! -f $neo5ttdir/${T2N4}-Pmap-subGM.nii.gz ]; then
@@ -206,6 +293,12 @@ if [ ! -f ${T2N4}-5TT.nii.gz ];then
     fslmaths ${T2N4}.nii.gz -mul 0 ${T2N4}-normalized-Pmap-0005.nii.gz
     fslmerge -t ${T2N4}-5TTnan.nii.gz ${T2N4}-normalized-Pmap-0001.nii.gz ${T2N4}-normalized-Pmap-0002.nii.gz ${T2N4}-normalized-Pmap-0003.nii.gz ${T2N4}-normalized-Pmap-0004.nii.gz ${T2N4}-normalized-Pmap-0005.nii.gz
     fslmaths ${T2N4}-5TTnan.nii.gz -nan ${T2N4}-5TT.nii.gz
+fi
+
+# Create some 5TT maps for visualization
+if [ ! -f ${T2N4}-5TTvis.nii.gz ];then
+    5ttvis ${T2N4}-5TT.gz ${T2N4}-5TTvis.nii.gz;
+    5tt2gmwmi ${T2N4}-5TT.gz ${T2N4}-5TTgmwmi.nii.gz;
 fi
 
 cd $currdir
