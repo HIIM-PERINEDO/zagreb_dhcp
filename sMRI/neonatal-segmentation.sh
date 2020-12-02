@@ -1,19 +1,17 @@
 #!/bin/bash
 #
-# Script to run the neonatal-segmentation on sMRI_processed data
-#
 usage()
 {
   base=$(basename "$0")
   echo "usage: $base subjectID sessionID age [options]
-This script runs the dHCP surface pipeline.
+Script to run the mirtk neonatal-segmentation on sMRI_processed data
 Arguments:
   sID				Subject ID (e.g. PK356) 
   ssID                       	Session ID (e.g. MR1)
   age				Age at scanning in weeks (e.g. 40)
 Options:
-  -T2				T2 image to segment (default: derivatives/sMRI_preprocess/sub-$sID/ses-$ssID/sub-${ssID}_ses-${ssID}_T2w.nii.gz)
-  -m / -mask			mask (default: derivatives/sMRI_preprocess/sub-$sID/ses-$ssID/sub-${ssID}_ses-${ssID}_space-T2w_mask.nii.gz)
+  -T2				T2 image to segment (default: derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${ssID}_ses-${ssID}_T2w.nii.gz)
+  -m / -mask			mask (default: derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${ssID}_ses-${ssID}_space-T2w_mask.nii.gz)
   -d / -data-dir  <directory>   The directory used to run the script and output the files (default: derivatives/neonatal-segmentation)
   -a / -atlas	  		Atlas to use for DrawEM neonatal segmentation (default: ALBERT)    
   -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
@@ -31,8 +29,8 @@ ssID=$2
 age=$3
 
 currdir=`pwd`
-T2=derivatives/sMRI_preprocess/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_T2w.nii.gz
-mask=derivatives/sMRI_preprocess/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz
+T2=derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_T2w.nii.gz
+mask=derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz
 datadir=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID
 threads=10
 atlas=ALBERT
@@ -56,10 +54,10 @@ while [ $# -gt 0 ]; do
 done
 
 echo "Neonatal segmentation using DrawEM
-T2:         $T2 
 Subject:    $sID 
 Session:    $ssID
 Age:        $age
+T2:         $T2 
 Mask:	    $mask 
 Directory:  $datadir 
 Threads:    $threads

@@ -6,12 +6,13 @@ usage()
   base=$(basename "$0")
   echo "usage: $base subjectID sessionID age neonatal-segmentation-directory [options]
 Script to do M-CRIB neonatal-5TT (follows: https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT)
+Output 
 Arguments:
   sID				Subject ID (e.g. PK356) 
   ssID                       	Session ID (e.g. MR1)
   age				Age at scanning in weeks (e.g. 40)
-  segdir <directory>		Directory were the neonatal-segmentaion resides	(e.g. derivatives/neonatal-segmentation)		
 Options:
+  -s / -seg-dir <directory>	Root directory were the neonatal-segmentaion resides (default: derivatives/neonatal-segmentation)		
   -a / -atlas <directory>	DrawEM processed M-CRIB atlas location (default: $HOME/Research/Atlases/M-CRIB/derivatives/neonatal-segmentation_DrawEMv1p3_ALBERT_M-CRIB_preproc_neonatal-5TT)
   -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
   -h / -help / --help           Print usage.
@@ -21,19 +22,20 @@ Options:
 
 ################ ARGUMENTS ################
 
-[ $# -ge 4 ] || { usage; }
+[ $# -ge 3 ] || { usage; }
 command=$@
 sID=$1
 ssID=$2
 age=$3
-segdir=$4
 
+segdir=derivatives/neonatal-segmentation
 atlasdir=$HOME/Research/Atlases/M-CRIB/derivatives/neonatal-segmentation_DrawEMv1p3_ALBERT_M-CRIB_preproc_neonatal-5TT
 threads=10
 
-shift; shift; shift; shift
+shift; shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
+	-s|-seg-dir) shift; segdir=$1; ;;
 	-t|-threads)  shift; threads=$1; ;;
 	-a|-atlas)  shift; atlasdir=$1; ;; 
 	-h|-help|--help) usage; ;;
@@ -63,7 +65,7 @@ $BASH_SOURCE 	$command
 script=`basename $BASH_SOURCE .sh`
 logdir=$neo5ttdir/logs
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
-echo Executing: $codedir/sMRI/$script.sh $@ > ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
+echo Executing: $codedir/sMRI/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
@@ -126,6 +128,7 @@ cd $currdir
 ###################################################################################3
 ## Neonatal-5TT pipeline
 # 2. ANTs registration
+echo ANTs registration
 
 cd  $neo5ttdir
 
