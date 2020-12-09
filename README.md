@@ -10,9 +10,10 @@ The processing pipelines and processing scripts are organised as followed:
 To organise the data in BIDS datastructure format
 
 ## Structural pipeline in /sMRI
-To process the sMRI data with the main purpose to achieve tissue segmenation for the 5TT framework in MRtrix and anatomical parcellations for structural dMRI connectiviy analysis. Data is processed with the DrawEM algorithm.
+To process the sMRI data with the main purpose to achieve tissue segmenation for the 5TT framework in MRtrix and anatomical parcellations for structural dMRI connectiviy analysis. 
 
-DrawEM: https://github.com/MIRTK/DrawEM
+Data is processed with the DrawEM algorithm: https://github.com/MIRTK/DrawEM
+
 dhcp-structural-pipeline: https://github.com/BioMedIA/dhcp-structural-pipeline
 
 ## Diffusion pipeline in /dMRI
