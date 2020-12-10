@@ -2,7 +2,7 @@
 These are dHCP inspired processing pipelines for neonatal MRI 
 The repository can go inside the /code folder within of a BIDS studyfolder
 
-The data is organized in the same way as the 2nd data release for the dHCP (https://drive.google.com/file/d/197g9afbg9uzBt04qYYAIhmTOvI3nXrhI/view) and expects the nifti sourcedata files to be located in the BIDS folder /sourcedata (SIC!). Processed data/Processing pipelines store results in /derivatives
+The data is organized in the same way as the [2nd data release](https://drive.google.com/file/d/197g9afbg9uzBt04qYYAIhmTOvI3nXrhI/view) for the dHCP and expects the nifti sourcedata files to be located in the BIDS folder /sourcedata (SIC!). Processed data/Processing pipelines store results in /derivatives
 
 The processing pipelines and processing scripts are organised as followed: 
 
@@ -12,7 +12,7 @@ To organise the data in BIDS datastructure format
 ## Structural pipeline in /sMRI
 To process the sMRI data with the main purpose to achieve tissue segmenation for the 5TT framework in MRtrix and anatomical parcellations for structural dMRI connectiviy analysis. 
 
-Data is processed with the DrawEM algorithm: https://github.com/MIRTK/DrawEM
+Data is processed with [DrawEM version 1.3](https://github.com/MIRTK/DrawEM)
 
 dhcp-structural-pipeline: https://github.com/BioMedIA/dhcp-structural-pipeline
 
