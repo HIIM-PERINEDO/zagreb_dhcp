@@ -7,7 +7,7 @@ usage()
   echo "usage: $base subjectID sessionID [options]
 Script to preprocess dMRI data 
 1. denoising and unringing 
-2. TOPUP and EDDY 
+2. TOPUP and EDDY for motion- and susceptebility image distortion correction
 Arguments:
   sID				Subject ID (e.g. PK356) 
   ssID                       	Session ID (e.g. MR1)
@@ -16,9 +16,9 @@ Options:
   -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_sbref.nii.gz)
   -dwiPA			dMRI PA data, potentially for TOPUP  (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_dwi.nii.gz)
   -dwiPAsbref			dMRI PA SBRef, potentially for registration and TOPUP  (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_sbref.nii.gz)
-  -seAP				Spin-echo field map AP, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_dir-AP_epi.nii.gz)
-  -sePA				Spin-echo field map PA, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_dir-PA_epi.nii.gz)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_preproc)
+  -seAP				Spin-echo field map AP, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-AP_epi.nii.gz)
+  -sePA				Spin-echo field map PA, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-PA_epi.nii.gz)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_preproc/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -33,13 +33,13 @@ ssID=$2
 
 currdir=`pwd`
 
+# Defaults
 dwi=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_dwi.nii.gz
 dwiPA=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_dwi.nii.gz
 dwiAPsbref=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_sbref.nii.gz
 dwiPAsbref=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_sbref.nii.gz
-seAP=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_dir-AP_epi.nii.gz
-sePA=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_dir-PA_epi.nii.gz
-
+seAP=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_epi.nii.gz
+sePA=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_epi.nii.gz
 datadir=derivatives/dMRI_preproc/sub-$sID/ses-$ssID
 
 # check whether the different tools are set and load parameters
@@ -63,12 +63,12 @@ while [ $# -gt 0 ]; do
 done
 
 # Check if images exist, else put in No_image
-#if [ ! -f $dwi ]; then dwi=""; fi
-#if [ ! -f $dwiAPsbref ]; then dwiAPsbref=""; fi
-#if [ ! -f $dwiPA ]; then dwiPA=""; fi
-#if [ ! -f $dwiPAsbref ]; then dwiPAsbref=""; fi
-#if [ ! -f $seAP ]; then seAP=""; fi
-#if [ ! -f $sePA ]; then sePA=""; fi
+if [ ! -f $dwi ]; then dwi=""; fi
+if [ ! -f $dwiAPsbref ]; then dwiAPsbref=""; fi
+if [ ! -f $dwiPA ]; then dwiPA=""; fi
+if [ ! -f $dwiPAsbref ]; then dwiPAsbref=""; fi
+if [ ! -f $seAP ]; then seAP=""; fi
+if [ ! -f $sePA ]; then sePA=""; fi
 
 echo "Registration and sMRI-processing
 Subject:       $sID 
@@ -131,7 +131,7 @@ fi
 cd $currdir
 
 ##################################################################################
-# 1. Do PCA-denoising
+# 1. Do PCA-denoising and Remove Gibbs Ringing Artifacts
 cd $datadir
 
 # Directory for QC files
@@ -139,10 +139,110 @@ if [ ! -d denoise ]; then mkdir denoise; fi
 
 # Perform PCA-denosing
 if [ ! -f dwi_den.mif.gz ]; then
+    echo Doing MP PCA-denosing with dwidenoise
     # PCA-denoising
     dwidenoise dwi.mif.gz dwi_den.mif.gz -noise denoise/dwi_noise.mif.gz;
     # and calculate residuals
     mrcalc dwi.mif.gz dwi_den.mif.gz -subtract denoise/dwi_den_residuals.mif.gz
+    echo Check the residuals! Should not contain anatomical structure
 fi
+
+# Directory for QC files
+if [ ! -d unring ]; then mkdir unring; fi
+
+if [ ! -f dwi_den_unr.mif.gz ]; then
+    echo Remove Gibbs Ringing Artifacts with mrdegibbs
+    # Gibbs 
+    mrdegibbs -axes 0,1 dwi_den.mif.gz dwi_den_unr.mif.gz
+    #calculate residuals
+    mrcalc dwi_den.mif.gz  dwi_den_unr.mif.gz -subtract unring/dwi_den_unr_residuals.mif.gz
+    echo Check the residuals! Should not contain anatomical structure
+fi
+
 cd $currdir
 
+##################################################################################
+# 2. TOPUP and EDDY for Motion- and susceptibility distortion correction
+cd $datadir
+
+if [ ! -f seAP.mif.gz ]; then
+    mrconvert -json_import $seAP.json $seAP.nii.gz seAP.mif.gz
+fi
+if [ ! -f sePA.mif.gz ]; then
+    mrconvert -json_import $sePA.json $sePA.nii.gz sePA.mif.gz
+fi
+if [ ! -f seAPPA.mif.gz ]; then
+    mrcat seAP.mif.gz sePA.mif.gz seAPPA.mif.gz
+fi
+
+# Create b0APPA.mif.gz to go into TOPUP
+if [ ! -f b0APPA.mif.gz ];then
+    echo "Create a PErevPE pair of SE images to use with TOPUP
+1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif
+2. Run this script again.    
+    	 "
+    exit;
+fi
+
+
+# Do Topup and Eddy with dwipreproc
+#
+# use b0APPA.mif.gz (i.e. choose the two best b0s - could be placed first in dwiAP and dwiPA
+#
+
+if [ ! -f dwi_den_unr_eddy.mif.gz ];then
+   dwifslpreproc -se_epi b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
+	       -topup_options " --iout=field_mag_unwarped" \
+	       -eddy_options " --slm=linear --repol --mporder=16 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 " \
+	       -eddyqc_all eddy \
+	       dwi_den_unr.mif.gz \
+	       dwi_den_unr_eddy.mif.gz;
+   # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
+fi
+
+cd $currdir
+
+
+##################################################################################
+# 3. Mask generation, N4 biasfield correction, meanb0 generation and tensor estimation
+cd $datadir
+
+echo "Pre-processing with mask generation, N4 biasfield correction, meanb0 generation and tensor estimation"
+
+# point to right filebase
+dwi=dwi_den_unr_eddy
+
+# Create mask and dilate (to ensure usage with ACT)
+if [ ! -f mask.mif.gz ]; then
+    dwiextract -bzero $dwi.mif.gz - | mrmath -force -axis 3 - mean meanb0tmp.nii.gz
+    bet meanb0tmp meanb0tmp_brain -m -F
+    # Check result
+    mrview meanb0tmp.nii.gz -roi.load meanb0tmp_brain_mask.nii.gz -roi.opacity 0.5 -mode 2
+    mrconvert meanb0tmp_brain_mask.nii.gz mask.mif.gz
+    rm meanb0tmp*
+fi
+
+# Do B1-correction. Use ANTs N4
+if [ ! -f  ${dwi}_N4.mif.gz ]; then
+    threads=10;
+    if [ ! -d N4 ]; then mkdir N4;fi
+    dwibiascorrect ants -mask mask.mif.gz -bias N4/bias.mif.gz $dwi.mif.gz ${dwi}_N4.mif.gz
+fi
+
+# Extract mean B0
+if [ ! -f meanb0.nii.gz ]; then
+    dwiextract -bzero ${dwi}_N4.mif.gz - |  mrmath -force -axis 3 - mean meanb0.mif.gz
+    mrcalc meanb0.mif.gz mask.mif.gz -mul meanb0_brain.mif.gz
+    mrconvert meanb0.mif.gz meanb0.nii.gz
+    mrconvert meanb0_brain.mif.gz meanb0_brain.nii.gz
+    echo "Visually check the meanb0_brain"
+    mrview meanb0_brain.nii.gz -mode 2
+fi
+
+# Calculate diffusion tensor and tensor metrics
+if [ ! -f dt.mif ]; then
+    dwi2tensor -mask mask.mif.gz ${dwi}_N4.mif.gz dt.mif.gz
+    tensor2metric -force -fa fa.mif.gz -adc adc.mif.gz -rd rd.mif.gz -ad ad.mif.gz -vector ev.mif.gz dt.mif.gz
+fi
+
+cd $currdir
