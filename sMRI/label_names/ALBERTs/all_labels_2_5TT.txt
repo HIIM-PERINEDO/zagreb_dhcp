@@ -67,8 +67,8 @@
 0	Extra-cranial-background
 4	Lateral-Ventricle-left
 4	Lateral-Ventricle-right
-1	Cerebellum-left
-1	Cerebellum-right
+2	Cerebellum-left
+2	Cerebellum-right
 2	Caudate-nucleus-right
 2	Caudate-nucleus-left
 2	Thalamus-right,-high-intensity-part-in-T2
