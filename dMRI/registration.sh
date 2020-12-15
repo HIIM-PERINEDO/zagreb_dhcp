@@ -5,15 +5,18 @@ usage()
 {
   base=$(basename "$0")
   echo "usage: $base subjectID sessionID [options]
-Registration of meanb0 to sMRI T2 (using FSL's FLIRT BBR)
+Rigid-body linear registration of dMRI (meanb0) to sMRI (T2)
+(NOTE - currently BBR registration does not work, to be explored with proper 3D T2w)
+Then tranform T2 and 5TT into dMRI space (by updating headers = no resampling)
+
 Arguments:
   sID				Subject ID (e.g. PK356) 
   ssID                       	Session ID (e.g. MR1)
 Options:
-  -meanb0			Undistorted meanb0 (default: derivatives/dMRI_preproc/sub-sID/ses-ssID/meanb0.nii.gz)
-  -T2				T2 to register to (default: N4-corrected brain derivatives/neonatal-segmentation/sub-sID/ses-ssID/N4/sub-sID_ses-ssID_T2w.nii.gz)
-  -WMseg			WM segmentation of T2 (default: is the L/R combined derivatives/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_T2w_L/R_white.nii.gz)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/registration/sub-sID/ses-ssID)
+  -meanb0			Undistorted brain extracted dMRI mean b0 image  (default: derivatives/dMRI_preproc/sub-sID/ses-ssID/meanb0_brain.nii.gz)
+  -T2				T2 to register to, should be N4-corrected brain extracted (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/N4/sub-sID_ses-ssID_T2w.nii.gz)
+  -5TT				5TT image of T2, to use for BBR reg and to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/5TT/sub-sID_ses-ssID_T2w_5TT.nii.gz)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_preproc/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -29,10 +32,10 @@ ssID=$2
 currdir=`pwd`
 
 # Defaults
-meanb0=
-T2=sourcedata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_T2w.nii.gz
-WMseg=""; #Start off being leaving blank
-datadir=derivatives/registration/sub-$sID/ses-$ssID
+meanb0=derivatives/dMRI_preproc/sub-$sID/ses-$ssID/meanb0_brain.nii.gz
+T2=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/N4/sub-${sID}_ses-${ssID}_T2w.nii.gz
+act5tt=derivatives/neonatal-segmentation/sub-sID/ses-ssID/5TT/sub-sID_ses-ssID_T2w_5TT.nii.gz
+datadir=derivatives/dMRI_preproc/sub-$sID/ses-$ssID
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -40,12 +43,9 @@ codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
-	-dwi) shift; dwi=$1; ;;
-	-dwiAPsbref) shift; dwiAPsbref=$1; ;;
-	-dwiPA) shift; dwiPA=$1; ;;
-	-dwiPAsbref) shift; dwiPAsbref=$1; ;;
-	-seAP) shift; seAP=$1; ;;
-	-seAP) shift; sePA=$1; ;;
+	-T2) shift; T2=$1; ;;
+	-meanb0) shift; meanb0=$1; ;;
+	-5TT) shift; act5tt=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
 	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
@@ -54,32 +54,20 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# Check if images exist, else put in No_image
-if [ ! -f $dwi ]; then dwi=""; fi
-if [ ! -f $dwiAPsbref ]; then dwiAPsbref=""; fi
-if [ ! -f $dwiPA ]; then dwiPA=""; fi
-if [ ! -f $dwiPAsbref ]; then dwiPAsbref=""; fi
-if [ ! -f $seAP ]; then seAP=""; fi
-if [ ! -f $sePA ]; then sePA=""; fi
-
-echo "Registration and sMRI-processing
+echo "Registration of dMRI and sMRI (using 5TT for WMseg with BBR) and transformation of T2 and 5TT into dMRI-space
 Subject:       $sID 
 Session:       $ssID
-DWI (AP):      $dwi
-DWI (APSBRef): $dwiAPsbref
-DWI (PA):      $dwiPA
-DWI (PASBRef): $dwiPAsbref
-SE fMAP (AP):  $seAP	       
-SE fMAP (PA):  $sePA	       
+meanb0:	       $meanb0
+T2:	       $T2
+5TT:           $act5tt
 Directory:     $datadir 
 $BASH_SOURCE   $command
 ----------------------------"
 
-logdir=derivatives/preprocessing_logs/sub-$sID/ses-$ssID
+logdir=$datadir/logs
 if [ ! -d $datadir ];then mkdir -p $datadir; fi
 if [ ! -d $logdir ];then mkdir -p $logdir; fi
 
-echo dMRI preprocessing on subject $sID and session $ssID
 script=`basename $0 .sh`
 echo Executing: $codedir/sMRI/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
@@ -88,153 +76,52 @@ cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&
 echo
 
 ##################################################################################
-# 0. Copy to files to datadir (incl .json and bvecs/bvals files if present at original location)
-filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
-for file in $filelist; do
-    filebase=`basename $file .nii.gz`;
-    filedir=`dirname $file`
-    cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/.
+# 0. Copy to files to datadir (incl .json if present at original location)
 
+for file in $T2 $meanb0 $act5tt; do
+    origdir=dirname $file
+    filebase=`basename $file .nii.gz`
+    if [ ! -f $datadir/$filebase.nii.gz ];then
+	cp $file $datadir/.
+	if [ -f $origdir/$filebase.json ];then
+	    cp $origdir/$filebase.json $datadir/.
+	fi
+    fi
 done
 
-#Then update variables to only refer to filebase names (instead of path/file)
-dwi=`basename $dwi .nii.gz` 
-dwiAPsbref=`basename $dwiAPsbref .nii.gz` 
-dwiPA=`basename $dwiPA .nii.gz`
-dwiPAsbref=`basename $dwiPAsbref .nii.gz`
-seAP=`basename $seAP .nii.gz`
-sePA=`basename $sePA .nii.gz`
-
+# Update variables to point at corresponding filebases in $datadir
+T2=`basename $T2 .nii.gz`
+meanb0=`basename $meanb0 .nii.gz`
+act5tt=`basename $act5tt .nii.gz`
 
 ##################################################################################
-# 0. Create dwi.mif.gz to work with
+## 1. Do registrations and transform into dMRI space
+# Adaption from mine and Kerstin Pannek's MRtrix posts: https://community.mrtrix.org/t/registration-of-structural-and-diffusion-weighted-data/203/8?u=finn
+
 cd $datadir
 
-if [[ $dwi = "" ]];then
-    echo "No dwi data provided";
-    exit;
-else
-    # Create a dwi.mif.gz-file to work with
-    if [ ! -f dwi.mif.gz ]; then
-	mrconvert -json_import $dwi.json -fslgrad $dwi.bvec $dwi.bval $dwi.nii.gz dwi.mif.gz
-    fi
+if [ ! -d reg ];then mkdir reg; fi
+
+# Do brain extractions of meanb0 and T2 before linear registration
+if [ ! -f ${meanb0}_brain.nii.gz ];then
+    bet $meanb0.nii.gz ${meanb0}_brain.nii.gz -F -R
 fi
-
-cd $currdir
-
-##################################################################################
-# 1. Do PCA-denoising and Remove Gibbs Ringing Artifacts
-cd $datadir
-
-# Directory for QC files
-if [ ! -d denoise ]; then mkdir denoise; fi
-
-# Perform PCA-denosing
-if [ ! -f dwi_den.mif.gz ]; then
-    echo Doing MP PCA-denosing with dwidenoise
-    # PCA-denoising
-    dwidenoise dwi.mif.gz dwi_den.mif.gz -noise denoise/dwi_noise.mif.gz;
-    # and calculate residuals
-    mrcalc dwi.mif.gz dwi_den.mif.gz -subtract denoise/dwi_den_residuals.mif.gz
-    echo Check the residuals! Should not contain anatomical structure
+if [ ! -f ${T2}_brain.nii.gz ];then
+    bet $T2.nii.gz ${T2}_brain.nii.gz -F -R
 fi
+     
+# Registration
+echo "Rigid-body linear registration using FSL's FLIRT"
+flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -omat reg/${meanb0}_2_${T2}_flirt-dof6.mat
 
-# Directory for QC files
-if [ ! -d unring ]; then mkdir unring; fi
+# Transform FLIRT registration matrix into MRtrix format
+transformconvert reg/${meanb0}_2_${T2}_flirt-dof6.mat $meanb0.nii.gz $T2.nii.gz flirt_import reg/${meanb0}_2_${T2}_mrtrix-dof6.mat
 
-if [ ! -f dwi_den_unr.mif.gz ]; then
-    echo Remove Gibbs Ringing Artifacts with mrdegibbs
-    # Gibbs 
-    mrdegibbs -axes 0,1 dwi_den.mif.gz dwi_den_unr.mif.gz
-    #calculate residuals
-    mrcalc dwi_den.mif.gz  dwi_den_unr.mif.gz -subtract unring/dwi_den_unr_residuals.mif.gz
-    echo Check the residuals! Should not contain anatomical structure
-fi
+# Then transform T2 and 5TT into dMRI space by updating image headers (no resampling!)
+mrtransform $T2.nii.gz -linear reg/${meanb0}_2_${T2}_mrtrix-dof6.mat ${T2}_space-dwi.nii.gz -inverse
+mrtransform $act5tt.nii.gz -linear reg/${meanb0}_2_${T2}_mrtrix-dof6.mat ${act5tt}_space-dwi.nii.gz -inverse
 
-cd $currdir
-
-##################################################################################
-# 2. TOPUP and EDDY for Motion- and susceptibility distortion correction
-cd $datadir
-
-if [ ! -f seAP.mif.gz ]; then
-    mrconvert -json_import $seAP.json $seAP.nii.gz seAP.mif.gz
-fi
-if [ ! -f sePA.mif.gz ]; then
-    mrconvert -json_import $sePA.json $sePA.nii.gz sePA.mif.gz
-fi
-if [ ! -f seAPPA.mif.gz ]; then
-    mrcat seAP.mif.gz sePA.mif.gz seAPPA.mif.gz
-fi
-
-# Create b0APPA.mif.gz to go into TOPUP
-if [ ! -f b0APPA.mif.gz ];then
-    echo "Create a PErevPE pair of SE images to use with TOPUP
-1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif
-2. Run this script again.    
-    	 "
-    exit;
-fi
-
-
-# Do Topup and Eddy with dwipreproc
-#
-# use b0APPA.mif.gz (i.e. choose the two best b0s - could be placed first in dwiAP and dwiPA
-#
-
-if [ ! -f dwi_den_unr_eddy.mif.gz ];then
-   dwifslpreproc -se_epi b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
-	       -topup_options " --iout=field_mag_unwarped" \
-	       -eddy_options " --slm=linear --repol --mporder=16 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 " \
-	       -eddyqc_all eddy \
-	       dwi_den_unr.mif.gz \
-	       dwi_den_unr_eddy.mif.gz;
-   # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
-fi
-
-cd $currdir
-
-
-##################################################################################
-# 3. Mask generation, N4 biasfield correction, meanb0 generation and tensor estimation
-cd $datadir
-
-echo "Pre-processing with mask generation, N4 biasfield correction, meanb0 generation and tensor estimation"
-
-# point to right filebase
-dwi=dwi_den_unr_eddy
-
-# Create mask and dilate (to ensure usage with ACT)
-if [ ! -f mask.mif.gz ]; then
-    dwiextract -bzero $dwi.mif.gz - | mrmath -force -axis 3 - mean meanb0tmp.nii.gz
-    bet meanb0tmp meanb0tmp_brain -m -F
-    # Check result
-    mrview meanb0tmp.nii.gz -roi.load meanb0tmp_brain_mask.nii.gz -roi.opacity 0.5 -mode 2
-    mrconvert meanb0tmp_brain_mask.nii.gz mask.mif.gz
-    rm meanb0tmp*
-fi
-
-# Do B1-correction. Use ANTs N4
-if [ ! -f  ${dwi}_N4.mif.gz ]; then
-    threads=10;
-    if [ ! -d N4 ]; then mkdir N4;fi
-    dwibiascorrect ants -mask mask.mif.gz -bias N4/bias.mif.gz $dwi.mif.gz ${dwi}_N4.mif.gz
-fi
-
-# Extract mean B0
-if [ ! -f meanb0.nii.gz ]; then
-    dwiextract -bzero ${dwi}_N4.mif.gz - |  mrmath -force -axis 3 - mean meanb0.mif.gz
-    mrcalc meanb0.mif.gz mask.mif.gz -mul meanb0_brain.mif.gz
-    mrconvert meanb0.mif.gz meanb0.nii.gz
-    mrconvert meanb0_brain.mif.gz meanb0_brain.nii.gz
-    echo "Visually check the meanb0_brain"
-    mrview meanb0_brain.nii.gz -mode 2
-fi
-
-# Calculate diffusion tensor and tensor metrics
-if [ ! -f dt.mif ]; then
-    dwi2tensor -mask mask.mif.gz ${dwi}_N4.mif.gz dt.mif.gz
-    tensor2metric -force -fa fa.mif.gz -adc adc.mif.gz -rd rd.mif.gz -ad ad.mif.gz -vector ev.mif.gz dt.mif.gz
-fi
+# Create some visualisationclean-up
+#rm *tmp* reg/*tmp*
 
 cd $currdir
