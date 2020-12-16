@@ -6,8 +6,10 @@ usage()
   base=$(basename "$0")
   echo "usage: $base subjectID sessionID [options]
 Script to preprocess dMRI data 
-1. denoising and unringing 
+1. MP-PCA Denoising and Gibbs Unringing 
 2. TOPUP and EDDY for motion- and susceptebility image distortion correction
+3. N4 biasfield correction, Normalisation
+
 Arguments:
   sID				Subject ID (e.g. PK356) 
   ssID                       	Session ID (e.g. MR1)
@@ -18,7 +20,7 @@ Options:
   -dwiPAsbref			dMRI PA SBRef, potentially for registration and TOPUP  (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_sbref.nii.gz)
   -seAP				Spin-echo field map AP, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-AP_epi.nii.gz)
   -sePA				Spin-echo field map PA, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-PA_epi.nii.gz)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_preproc/sub-sID/ses-ssID)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -40,7 +42,7 @@ dwiAPsbref=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_sbref
 dwiPAsbref=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_sbref.nii.gz
 seAP=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_epi.nii.gz
 sePA=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_epi.nii.gz
-datadir=derivatives/dMRI_preproc/sub-$sID/ses-$ssID
+datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -83,7 +85,7 @@ Directory:     $datadir
 $BASH_SOURCE   $command
 ----------------------------"
 
-logdir=derivatives/preprocessing_logs/sub-$sID/ses-$ssID
+logdir=$datadir/logs
 if [ ! -d $datadir ];then mkdir -p $datadir; fi
 if [ ! -d $logdir ];then mkdir -p $logdir; fi
 
@@ -96,12 +98,15 @@ cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&
 echo
 
 ##################################################################################
-# 0. Copy to files to datadir (incl .json and bvecs/bvals files if present at original location)
+# 0. Copy to files to datadir/preproc (incl .json and bvecs/bvals files if present at original location)
+
+if [ ! -d $datadir/preproc ]; then mkdir -p $datadir/preproc; fi
+
 filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
 for file in $filelist; do
     filebase=`basename $file .nii.gz`;
     filedir=`dirname $file`
-    cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/.
+    cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/preproc/.
 
 done
 
@@ -116,7 +121,7 @@ sePA=`basename $sePA .nii.gz`
 
 ##################################################################################
 # 0. Create dwi.mif.gz to work with
-cd $datadir
+cd $datadir/preproc
 
 if [[ $dwi = "" ]];then
     echo "No dwi data provided";
@@ -132,7 +137,7 @@ cd $currdir
 
 ##################################################################################
 # 1. Do PCA-denoising and Remove Gibbs Ringing Artifacts
-cd $datadir
+cd $datadir/preproc
 
 # Directory for QC files
 if [ ! -d denoise ]; then mkdir denoise; fi
@@ -163,7 +168,7 @@ cd $currdir
 
 ##################################################################################
 # 2. TOPUP and EDDY for Motion- and susceptibility distortion correction
-cd $datadir
+cd $datadir/preproc
 
 if [ ! -f seAP.mif.gz ]; then
     mrconvert -json_import $seAP.json $seAP.nii.gz seAP.mif.gz
@@ -178,7 +183,7 @@ fi
 # Create b0APPA.mif.gz to go into TOPUP
 if [ ! -f b0APPA.mif.gz ];then
     echo "Create a PErevPE pair of SE images to use with TOPUP
-1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif
+1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif into $datadir/preproc
 2. Run this script again.    
     	 "
     exit;
@@ -205,9 +210,9 @@ cd $currdir
 
 ##################################################################################
 # 3. Mask generation, N4 biasfield correction, meanb0 generation and tensor estimation
-cd $datadir
+cd $datadir/preproc
 
-echo "Pre-processing with mask generation, N4 biasfield correction, meanb0 generation and tensor estimation"
+echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation, meanb0 generation and tensor estimation"
 
 # point to right filebase
 dwi=dwi_den_unr_eddy
@@ -215,7 +220,7 @@ dwi=dwi_den_unr_eddy
 # Create mask and dilate (to ensure usage with ACT)
 if [ ! -f mask.mif.gz ]; then
     dwiextract -bzero $dwi.mif.gz - | mrmath -force -axis 3 - mean meanb0tmp.nii.gz
-    bet meanb0tmp meanb0tmp_brain -m -F
+    bet meanb0tmp meanb0tmp_brain -m -F -R
     # Check result
     mrview meanb0tmp.nii.gz -roi.load meanb0tmp_brain_mask.nii.gz -roi.opacity 0.5 -mode 2
     mrconvert meanb0tmp_brain_mask.nii.gz mask.mif.gz
@@ -229,9 +234,31 @@ if [ ! -f  ${dwi}_N4.mif.gz ]; then
     dwibiascorrect ants -mask mask.mif.gz -bias N4/bias.mif.gz $dwi.mif.gz ${dwi}_N4.mif.gz
 fi
 
+
+# last file in the processing
+dwipreproclast=${dwi}_N4.mif.gz
+
+cd $currdir
+
+
+##################################################################################
+## 3. B0-normalise, create meanb0 and do tensor estimation
+
+cd $datadir
+
+# Create symbolic link to last file in /preproc and copy mask.mif.gz to $datadir
+ln -s preproc/$dwipreproclast dwi_preproc.mif.gz
+cp preproc/mask.mif.gz .
+dwi=dwi_preproc
+
+# B0-normalisation
+if [ ! -f ${dwi}_norm.mif.gz ];then
+    dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_norm.mif.gz
+fi
+
 # Extract mean B0
 if [ ! -f meanb0.nii.gz ]; then
-    dwiextract -bzero ${dwi}_N4.mif.gz - |  mrmath -force -axis 3 - mean meanb0.mif.gz
+    dwiextract -bzero ${dwi}_norm.mif.gz - |  mrmath -force -axis 3 - mean meanb0.mif.gz
     mrcalc meanb0.mif.gz mask.mif.gz -mul meanb0_brain.mif.gz
     mrconvert meanb0.mif.gz meanb0.nii.gz
     mrconvert meanb0_brain.mif.gz meanb0_brain.nii.gz
@@ -240,8 +267,9 @@ if [ ! -f meanb0.nii.gz ]; then
 fi
 
 # Calculate diffusion tensor and tensor metrics
-if [ ! -f dt.mif ]; then
-    dwi2tensor -mask mask.mif.gz ${dwi}_N4.mif.gz dt.mif.gz
+
+if [ ! -f dt.mif.gz ]; then
+    dwi2tensor -mask mask.mif.gz ${dwi}_norm.mif.gz dt.mif.gz
     tensor2metric -force -fa fa.mif.gz -adc adc.mif.gz -rd rd.mif.gz -ad ad.mif.gz -vector ev.mif.gz dt.mif.gz
 fi
 
