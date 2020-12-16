@@ -14,7 +14,10 @@ Arguments:
   ssID                       	Session ID (e.g. MR1)
 Options:
   -meanb0			Undistorted brain extracted dMRI mean b0 image  (default: derivatives/dMRI/sub-sID/ses-ssID/meanb0_brain.nii.gz)
-  -T2				T2 to register to, should be N4-corrected brain extracted (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/N4/sub-sID_ses-ssID_T2w.nii.gz)
+  -T2				T2 that has been segmented and will be registered to, should be N4-corrected brain extracted (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/N4/sub-sID_ses-ssID_T2w.nii.gz)
+  -all_label			All label file from segmentation, to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_T2w_all_labels.nii.gz)
+  -all_label_LUT		LUT for label file (default: codedir/label_names/ALBERT/all_labels.txt)
+  -a / -atlas			Atlas used for segmentation (options ALBERT or MCRIB) (default: ALBERT)
   -5TT				5TT image of T2, to use for BBR reg and to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/5TT/sub-sID_ses-ssID_T2w_5TT.nii.gz)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
@@ -23,6 +26,9 @@ Options:
 }
 
 ################ ARGUMENTS ################
+
+# check whether the different tools are set and load parameters
+codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 [ $# -ge 2 ] || { usage; }
 command=$@
@@ -34,17 +40,20 @@ currdir=`pwd`
 # Defaults
 meanb0=derivatives/dMRI/sub-$sID/ses-$ssID/meanb0.nii.gz
 T2=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/N4/sub-${sID}_ses-${ssID}_T2w.nii.gz
+label=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_T2w_all_labels.nii.gz
+labelLUT=$codedir/label_names/ALBERT/all_labels.txt
+atlas=ALBERT
 act5tt=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/5TT/sub-${sID}_ses-${ssID}_T2w_5TT.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-
-# check whether the different tools are set and load parameters
-codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-T2) shift; T2=$1; ;;
 	-meanb0) shift; meanb0=$1; ;;
+	-all_label) shift; label=$1; ;;
+	-all_label_LUT) shift; labelLUT=$1; ;;
+	-a|-atlas) shift; atlas=$1; ;;
 	-5TT) shift; act5tt=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
@@ -58,7 +67,10 @@ echo "Registration of dMRI and sMRI and transformation into dMRI-space
 Subject:       $sID 
 Session:       $ssID
 meanb0:	       $meanb0
+Atlas:	       $atlas     
 T2:	       $T2
+Label file:    $label
+Label LUT:     $labelLUT
 5TT:           $act5tt
 Directory:     $datadir 
 $BASH_SOURCE   $command
@@ -78,14 +90,15 @@ echo
 ##################################################################################
 # 0. Copy to files to relevant location in $datadir (incl .json if present at original location)
 
-# Files to go into $datadir (exclusively for meanb0)
-for file in $meanb0 $T2 $act5tt; do
+# Files to go into different locations in $datadir 
+for file in $meanb0 $T2 $act5tt $label; do
     origdir=dirname $file
     filebase=`basename $file .nii.gz`
     
     if [[ $file = $meanb0 ]]; then outdir=$datadir;fi
     if [[ $file = $T2 ]]; then outdir=$datadir/registration;fi
     if [[ $file = $act5tt ]]; then outdir=$datadir/act;fi
+    if [[ $file = $label ]]; then outdir=$datadir/parcellation/$atlas/segmentations;fi
 
     if [ ! -d $outdir ];then mkdir -p $outdir;fi
 			     
@@ -97,10 +110,21 @@ for file in $meanb0 $T2 $act5tt; do
     fi
 done
 
+# LUT to copy
+LUTdir=parcellation/$atlas/label_names
+if [ ! -d $datadir/$LUTdir ]; then mkdir -p $datadir/$LUTdir ]; fi
+for file in $labelLUT; do
+    filebase=`basename $file`
+    if [ ! -f $datadir/$LUTdir/$filebase ];then
+	cp $file $datadir/$LUTdir/.
+    fi
+done
+
 # Update variables to point at corresponding filebases in $datadir
 T2=`basename $T2 .nii.gz`
 meanb0=`basename $meanb0 .nii.gz`
 act5tt=`basename $act5tt .nii.gz`
+label=`basename $label .nii.gz`
 
 
 ##################################################################################
@@ -127,14 +151,25 @@ flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -omat reg/${mean
 # Transform FLIRT registration matrix into MRtrix format
 transformconvert reg/${meanb0}_2_${T2}_flirt-dof6.mat ${meanb0}_brain.nii.gz $T2.nii.gz flirt_import reg/${meanb0}_2_${T2}_mrtrix-dof6.mat
 
-# Then transform T2, 5TT, labels-file into dMRI space by updating image headers (no resampling!)
-mrtransform $T2.nii.gz -linear reg/${meanb0}_2_${T2}_mrtrix-dof6.mat ${T2}_space-dwi.nii.gz -inverse
-mrconvert ${T2}_space-dwi.nii.gz ../T2w_coreg.mif.gz
+cd $currdir
 
-# Go to ACT folder
-cd ../act
-mrtransform $act5tt.nii.gz -linear ../registration/reg/${meanb0}_2_${T2}_mrtrix-dof6.mat ${act5tt}_space-dwi.nii.gz -inverse
-ln -s ${act5tt}_space-dwi.nii.gz 5TT.mif.gz
+####################################################################################################
+## Transformations of T2, 5TT, labels-file into dMRI space by updating image headers (no resampling!)
+
+cd $datadir
+
+# T2
+mrtransform registration/$T2.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-dof6.mat registration/${T2}_space-dwi.nii.gz -inverse
+mrconvert registration/${T2}_space-dwi.nii.gz T2w_coreg.mif.gz
+
+# Take care of 5TT
+mrtransform act/$act5tt.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-dof6.mat act/${act5tt}_space-dwi.nii.gz -inverse
+mrconvert act/${act5tt}_space-dwi.nii.gz act/5TT.mif.gz
+
+# Take care of all_labels
+labeldir=parcellation/$atlas/segmentations
+mrtransform $labeldir/$label.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-dof6.mat $labeldir/${label}_space-dwi.nii.gz -inverse
+mrconvert $labeldir/${act5tt}_space-dwi.nii.gz $labeldir/all_labels.mif.gz
 
 # Create some visualisationclean-up
 #rm *tmp* reg/*tmp*
