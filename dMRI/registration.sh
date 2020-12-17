@@ -169,7 +169,7 @@ mrconvert act/${act5tt}_space-dwi.nii.gz act/5TT.mif.gz
 # Take care of all_labels
 labeldir=parcellation/$atlas/segmentations
 mrtransform $labeldir/$label.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-dof6.mat $labeldir/${label}_space-dwi.nii.gz -inverse
-mrconvert $labeldir/${act5tt}_space-dwi.nii.gz $labeldir/all_labels.mif.gz
+mrconvert $labeldir/${label}_space-dwi.nii.gz $labeldir/all_labels.mif.gz
 
 # Create some visualisationclean-up
 #rm *tmp* reg/*tmp*
