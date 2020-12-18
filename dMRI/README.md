@@ -1,5 +1,7 @@
 Processing pipeline
 
+Essentially follows the [BATMAN tutorial](https://osf.io/pm9ba/)
+
 Run scripts in the following order:
 
 1. processing.sh
