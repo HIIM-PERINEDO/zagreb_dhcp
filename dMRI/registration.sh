@@ -7,7 +7,11 @@ usage()
   echo "usage: $base subjectID sessionID [options]
 Rigid-body linear registration of dMRI (meanb0) to sMRI (T2)
 (NOTE - currently BBR registration does not work, to be explored with proper 3D T2w)
-Then tranforms T2 and 5TT into dMRI space (by updating headers = no resampling)
+Then tranformation into dMRI space (by updating headers = no resampling) of
+- T2 (used for segmentation)
+- 5TT image (in T2-space) created from segmentation
+- all_labels parcellation image (in T2-space) created from segmentation
+- labels parcellation image (in T2-space) created from segmentation
 
 Arguments:
   sID				Subject ID (e.g. PK356) 
@@ -15,10 +19,12 @@ Arguments:
 Options:
   -meanb0			Undistorted brain extracted dMRI mean b0 image  (default: derivatives/dMRI/sub-sID/ses-ssID/meanb0_brain.nii.gz)
   -T2				T2 that has been segmented and will be registered to, should be N4-corrected brain extracted (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/N4/sub-sID_ses-ssID_T2w.nii.gz)
-  -all_label			All label file from segmentation, to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_T2w_all_labels.nii.gz)
-  -all_label_LUT		LUT for label file (default: codedir/label_names/ALBERT/all_labels.txt)
   -a / -atlas			Atlas used for segmentation (options ALBERT or MCRIB) (default: ALBERT)
   -5TT				5TT image of T2, to use for BBR reg and to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/5TT/sub-sID_ses-ssID_T2w_5TT.nii.gz)
+  -all_label			all_label file from segmentation, to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_T2w_all_labels.nii.gz)
+  -all_label_LUT		LUT for all_label file (default: codedir/../label_names/ALBERT/all_labels.txt)
+  -label			label file from segmentation, to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_T2w_labels.nii.gz)
+  -label_LUT			LUT for label file (default: codedir/../label_names/ALBERT/labels.txt)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
@@ -34,25 +40,29 @@ codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 command=$@
 sID=$1
 ssID=$2
+shift; shift
 
 currdir=`pwd`
 
 # Defaults
 meanb0=derivatives/dMRI/sub-$sID/ses-$ssID/meanb0.nii.gz
 T2=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/N4/sub-${sID}_ses-${ssID}_T2w.nii.gz
-label=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_T2w_all_labels.nii.gz
-labelLUT=$codedir/label_names/ALBERT/all_labels.txt
+allLabel=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_T2w_all_labels.nii.gz
+allLabelLUT=$codedir/../label_names/ALBERT/all_labels.txt
+label=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_T2w_labels.nii.gz
+labelLUT=$codedir/../label_names/ALBERT/labels.txt
 atlas=ALBERT
 act5tt=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/5TT/sub-${sID}_ses-${ssID}_T2w_5TT.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 
-shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-T2) shift; T2=$1; ;;
 	-meanb0) shift; meanb0=$1; ;;
-	-all_label) shift; label=$1; ;;
-	-all_label_LUT) shift; labelLUT=$1; ;;
+	-all_label) shift; allLabel=$1; ;;
+	-all_label_LUT) shift; allLabelLUT=$1; ;;
+	-label) shift; label=$1; ;;
+	-label_LUT) shift; labelLUT=$1; ;;
 	-a|-atlas) shift; atlas=$1; ;;
 	-5TT) shift; act5tt=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
@@ -64,16 +74,18 @@ while [ $# -gt 0 ]; do
 done
 
 echo "Registration of dMRI and sMRI and transformation into dMRI-space
-Subject:       $sID 
-Session:       $ssID
-meanb0:	       $meanb0
-Atlas:	       $atlas     
-T2:	       $T2
-Label file:    $label
-Label LUT:     $labelLUT
-5TT:           $act5tt
-Directory:     $datadir 
-$BASH_SOURCE   $command
+Subject:       	   $sID 
+Session:       	   $ssID
+meanb0:	       	   $meanb0
+Atlas:	       	   $atlas     
+T2:		   $T2
+5TT:           	   $act5tt
+all_labels file:   $allLabel
+all_labels LUT:	   $allLabelLUT
+labels file:	   $label
+labels LUT:	   $labelLUT
+Directory:     	   $datadir 
+$BASH_SOURCE   	   $command
 ----------------------------"
 
 logdir=$datadir/logs
@@ -91,14 +103,14 @@ echo
 # 0. Copy to files to relevant location in $datadir (incl .json if present at original location)
 
 # Files to go into different locations in $datadir 
-for file in $meanb0 $T2 $act5tt $label; do
+for file in $meanb0 $T2 $act5tt $allLabel $label; do
     origdir=dirname $file
     filebase=`basename $file .nii.gz`
     
     if [[ $file = $meanb0 ]]; then outdir=$datadir;fi
     if [[ $file = $T2 ]]; then outdir=$datadir/registration;fi
     if [[ $file = $act5tt ]]; then outdir=$datadir/act;fi
-    if [[ $file = $label ]]; then outdir=$datadir/parcellation/$atlas/segmentations;fi
+    if [[ $file = $allLabel ]] || [[ $file = $label ]]; then outdir=$datadir/parcellation/$atlas/segmentations;fi
 
     if [ ! -d $outdir ];then mkdir -p $outdir;fi
 			     
@@ -113,7 +125,7 @@ done
 # LUT to copy
 LUTdir=parcellation/$atlas/label_names
 if [ ! -d $datadir/$LUTdir ]; then mkdir -p $datadir/$LUTdir ]; fi
-for file in $labelLUT; do
+for file in $labelLUT $allLabelLUT; do
     filebase=`basename $file`
     if [ ! -f $datadir/$LUTdir/$filebase ];then
 	cp $file $datadir/$LUTdir/.
@@ -124,6 +136,7 @@ done
 T2=`basename $T2 .nii.gz`
 meanb0=`basename $meanb0 .nii.gz`
 act5tt=`basename $act5tt .nii.gz`
+allLabel=`basename $allLabel .nii.gz`
 label=`basename $label .nii.gz`
 
 
@@ -145,16 +158,20 @@ if [ ! -f ${T2}_brain.nii.gz ];then
 fi
      
 # Registration
-echo "Rigid-body linear registration using FSL's FLIRT"
-flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -omat reg/${meanb0}_2_${T2}_flirt-dof6.mat
-
+if [ ! - f reg/${meanb0}_2_${T2}_flirt-dof6.mat ];then 
+    echo "Rigid-body linear registration using FSL's FLIRT"
+    flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -omat reg/${meanb0}_2_${T2}_flirt-dof6.mat
+fi
 # Transform FLIRT registration matrix into MRtrix format
-transformconvert reg/${meanb0}_2_${T2}_flirt-dof6.mat ${meanb0}_brain.nii.gz $T2.nii.gz flirt_import reg/${meanb0}_2_${T2}_mrtrix-dof6.mat
+if [ ! -f reg/${meanb0}_2_${T2}_mrtrix-dof6.mat ];then
+     transformconvert reg/${meanb0}_2_${T2}_flirt-dof6.mat ${meanb0}_brain.nii.gz $T2.nii.gz flirt_import reg/${meanb0}_2_${T2}_mrtrix-dof6.mat
+fi
+     
 
 cd $currdir
 
 ####################################################################################################
-## Transformations of T2, 5TT, labels-file into dMRI space by updating image headers (no resampling!)
+## Transformations of T2, 5TT, allLabels-file into dMRI space by updating image headers (no resampling!)
 
 cd $datadir
 
@@ -168,8 +185,13 @@ mrconvert act/${act5tt}_space-dwi.nii.gz act/5TT.mif.gz
 
 # Take care of all_labels
 labeldir=parcellation/$atlas/segmentations
+mrtransform $labeldir/$allLabel.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-dof6.mat $labeldir/${allLabel}_space-dwi.nii.gz -inverse
+mrconvert $labeldir/${allLabel}_space-dwi.nii.gz $labeldir/all_labels.mif.gz
+
+# Take care of labels
+labeldir=parcellation/$atlas/segmentations
 mrtransform $labeldir/$label.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-dof6.mat $labeldir/${label}_space-dwi.nii.gz -inverse
-mrconvert $labeldir/${label}_space-dwi.nii.gz $labeldir/all_labels.mif.gz
+mrconvert $labeldir/${label}_space-dwi.nii.gz $labeldir/labels.mif.gz
 
 # Create some visualisationclean-up
 #rm *tmp* reg/*tmp*

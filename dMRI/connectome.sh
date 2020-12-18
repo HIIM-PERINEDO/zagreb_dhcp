@@ -40,8 +40,8 @@ datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 tract=derivatives/dMRI/sub-$sID/ses-$ssID/tractography/whole_brain_10M_sift.tck
 label=derivatives/dMRI/sub-$sID/ses-$ssID/parcellation/$atlas/segmentations/all_labels.mif.gz
 atlas=ALBERT
-lutin=$codedir/label_names/ALBERT/all_labels.txt
-lutout=$codedir/label_names/ALBERT/all_labels_2_CorticalStructuresConnectome.txt
+lutin=$codedir/../label_names/ALBERT/all_labels.txt
+lutout=$codedir/../label_names/ALBERT/all_labels_2_CorticalStructuresConnectome.txt
 connectome=cortical
 threads=10
 
@@ -80,7 +80,7 @@ if [ ! -d $datadir ];then mkdir -p $datadir; fi
 if [ ! -d $logdir ];then mkdir -p $logdir; fi
 
 script=`basename $0 .sh`
-echo Executing: $codedir/sMRI/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
+echo Executing: $codedir/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
@@ -98,7 +98,7 @@ if [ ! -f $datadir/$tractdir/$tractbase.tck ];then
     cp $tract $datadir/$tractdir/.
 fi
 
-# Labels file will go into parcellation folder and the correspondings atla's segmentations subfolder
+# Labels file will go into parcellation folder and the correspondings atlas's segmentations subfolder
 segdir=parcellation/$atlas/segmentations
 if [ ! -d $datadir/$$segdir ]; then mkdir -p $datadir/$segdir; fi									  
 for file in $label; do
@@ -162,10 +162,10 @@ if [ ! -f $seg_out ]; then
 	thr=17; #Last entry in lut_out is 16
     fi
         
-    # first use labelconvert to extract connectome structures and put into a continuous LUT
-    labelconvert -force $seg_in $lut_in $lut_out $seg_out
-    # then use mrthreshold to get rid of entries past $thr and make sure $seg_out is 3D and with integer datatype
-    mrthreshold -abs $thr -invert $seg_out - | mrcalc -force -datatype uint32 - $seg_out -mul - | mrmath -force -axis 3 -datatype uint32 - mean $seg_out
+    # first use labelconvert to extract connectome structures and put into a continuous LUT and make sure 3D and datatype uint32
+    labelconvert -force $seg_in $lut_in $lut_out - | mrmath -datatype uint32 -force -axis 3 - mean $seg_out
+    # then use mrthreshold to get rid of entries past $thr and make sure $seg_out is 3D and with integer datatype# NOT needed since all $seg_out does not need to be thresholded
+    #mrthreshold -abs $thr -invert $seg_out - | mrcalc -force -datatype uint32 - $seg_out -mul - | mrmath -force -axis 3 -datatype uint32 - mean $seg_out
 fi
 
 cd $currdir
