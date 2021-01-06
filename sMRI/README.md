@@ -17,7 +17,7 @@ This runs DrawEM algorithm on anatomical T2w data.
 NOTE: 
 - Faulty results are achieved for 3D-T2w (SPACE), so the algorithm is run on upsampled/highres cor/tra T2w. 
 Preferably tra T2w since has more homogenous signal => better cortical segmentation
-- The current parameters from DrawEM in dhcp performs better than DrawEM1p3, and should ideally be used (currently NOT implemented)
+- The current parameters from DrawEM in dhcp performs better than DrawEM1p3. To run dhcp's neonatal-segmentation, run script neonatal-segmentation_dhcp-structural-pipeline_only.sh
 
 ## 3. Neonatal-5TT
 Run script neonatal-5TT.sh
