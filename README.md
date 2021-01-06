@@ -15,7 +15,7 @@ These includes neonatal segmentation with DrawEM and surface generation and anal
 
 One purpose is to achieve tissue segmenation that can be used in the dMRI analysis (see below)
 
-NOTE - current version of [DrawEM version 1.3](https://github.com/MIRTK/DrawEM) have incorporated segmentation according to [M-CRIB_2.0 atlas](https://osf.io/4vthr/)
+NOTE - current version of [DrawEM version 1.3](https://github.com/MIRTK/DrawEM) has incorporated optional segmentation according to the [M-CRIB_2.0 atlas](https://osf.io/4vthr/)
 
 ## Diffusion pipeline in /dMRI
 To process dMRI neonatal data 
