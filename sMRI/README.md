@@ -10,12 +10,16 @@ Run script process.sh
 - Transforms FLAIR into T2w-space (3D-T2w) and creates adapted brain mask from transformed FLAIR
 
 ## 2. Neonatal segmentation
-Runs DrawEM algorithm on anatomical T2w data.
+Run script neonatal-segmentation.sh
 
-Faulty results are achieved for 3D-T2w, so the algorithm is run on upsampled/highres cor/tra T2w.
+This runs DrawEM algorithm on anatomical T2w data.
+
+NOTE: 
+- Faulty results are achieved for 3D-T2w (SPACE), so the algorithm is run on upsampled/highres cor/tra T2w. 
 Preferably tra T2w since has more homogenous signal => better cortical segmentation
+- The current parameters from DrawEM in dhcp performs better than DrawEM1p3, and should ideally be used (currently NOT implemented)
 
 ## 3. Neonatal-5TT
-Runs an adapted version of Manuel Bleza's 5TT-script to achieve MRtrix 5TT image
+Run 
 
-neonatal-5TT: https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT
+Runs an adapted version of Manuel Bleza's [neonatal-5TT(https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve MRtrix 5TT image
