@@ -8,7 +8,7 @@ Script to run the mirtk neonatal-segmentation on sMRI_processed data
 Creates a 5TT equivalent from resulting anatomical parcellation (all_labels)
 Arguments:
   sID				Subject ID (e.g. PK356) 
-  ssID                       	Session ID (e.g. MR1)
+  ssID                       	Session ID (e.g. MR2)
   age				Age at scanning in weeks (e.g. 40)
 Options:
   -T2				T2 image to segment (default: derivatives/sMRI_preproc/sub-sID/ses-ssID/sub-ssID_ses-ssID_T2w.nii.gz)
@@ -92,7 +92,7 @@ else
     else
 	# Use provided mask
 	mirtk neonatal-segmentation $T2 $age -m $mask -d $datadir -atlas $atlas -p 1 -c 0 -t $threads \
-	      > $logdir/sub-${sID}_ses-${ssID}_$script.txt 2>&1;
+§	      > $logdir/sub-${sID}_ses-${ssID}_$script.txt 2>&1;
     fi
 fi
 
@@ -105,7 +105,7 @@ cd $datadir
 if [ ! -d 5TT ];then mkdir 5TT; fi
 
 # Path to LUTs for conversion
-LUTdir=$codedir/label_names/$atlas
+LUTdir=$codedir/../label_names/$atlas
 
 if [ ! -f 5TT/${T2}_5TT.nii.gz ]; then
     # NOTE - for both all_labels_2_5TT.txt and all_labels_2_5TT_sgm_amyg_hipp.txt
