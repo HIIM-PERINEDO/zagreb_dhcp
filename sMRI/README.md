@@ -20,6 +20,6 @@ Preferably tra T2w since has more homogenous signal => better cortical segmentat
 - The current parameters from DrawEM in dhcp performs better than DrawEM1p3, and should ideally be used (currently NOT implemented)
 
 ## 3. Neonatal-5TT
-Run 
+Run script neonatal-5TT.sh
 
-Runs an adapted version of Manuel Bleza's [neonatal-5TT(https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve MRtrix 5TT image
+This runs an adapted version of Manuel Bleza's procedure [neonatal-5TT](https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve MRtrix 5TT image
