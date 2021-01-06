@@ -23,3 +23,5 @@ Preferably tra T2w since has more homogenous signal => better cortical segmentat
 Run script neonatal-5TT.sh
 
 This runs an adapted version of Manuel Bleza's procedure [neonatal-5TT](https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve MRtrix 5TT image
+
+To avoid ANTsJointLabelFusion step, run script neonatal-5TT_noANTsJointLabelFusion.sh
