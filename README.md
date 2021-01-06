@@ -10,20 +10,24 @@ The processing pipelines and processing scripts are organised as followed:
 To organise the data in BIDS datastructure format
 
 ## Structural pipeline in /sMRI
-To process the sMRI data with the main purpose to achieve tissue segmenation for the 5TT framework in MRtrix and anatomical parcellations for structural dMRI connectiviy analysis. 
+To process the sMRI data within the framework of the [dhcp-structural-pipeline](https://github.com/BioMedIA/dhcp-structural-pipeline)
 
-Data is processed with [DrawEM version 1.3](https://github.com/MIRTK/DrawEM)
+These includes neonatal segmentation with DrawEM and surface generation and analysis. 
 
-dhcp-structural-pipeline: https://github.com/BioMedIA/dhcp-structural-pipeline
+One purpose is to achieve tissue segmenation that can be used in the dMRI analysis (see below)
+
+NOTE - current version of [DrawEM version 1.3](https://github.com/MIRTK/DrawEM) have incorporated segmentation according to M-CRIB_2.0 atlas
 
 ## Diffusion pipeline in /dMRI
-To process dMRI neonatal data within the 5TT framework.
+To process dMRI neonatal data 
 
-dhcp-diffusion-pipeline: https://git.fmrib.ox.ac.uk/matteob/dHCP_neo_dMRI_pipeline_release
+Different approaches may be taken
+- 5TT framework in MRtrix and anatomical parcellations for structural dMRI connectiviy analysis
+- Potentially the [dhcp-diffusion-pipeline](https://git.fmrib.ox.ac.uk/matteob/dHCP_neo_dMRI_pipeline_release)
 
 ## Resting-state fMRI pipeline in /rsfMRI
 To process rs-fMRI neonatal data.
 
-dhcp-fmri-pipeline: https://git.fmrib.ox.ac.uk/seanf/dhcp-neonatal-fmri-pipeline
+This would use the [dhcp-fmri-pipeline](https://git.fmrib.ox.ac.uk/seanf/dhcp-neonatal-fmri-pipeline)
 
 
