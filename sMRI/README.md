@@ -7,7 +7,7 @@ Run script process.sh
 
 - Upsamples inplane 2D anatomicals (tra T2w and cor T2w)
 - Registers anatomicals (FLAIR, cor highres T2w and tra highres T2w) to 3D-T2w
-- Create adapted brain mask in 3D-T2w space (space-T2w) from transformed FLAIR
+- Transforms FLAIR into T2w-space (3D-T2w) and creates adapted brain mask from transformed FLAIR
 
 ## 2. Neonatal segmentation
 Runs DrawEM algorithm on anatomical T2w data.
