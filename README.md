@@ -1,6 +1,6 @@
 # zagreb_dhcp
 These are dHCP inspired processing pipelines for neonatal MRI 
-The repository can go inside the /code folder within of a BIDS studyfolder
+The repository can go inside the /code folder within of a [BIDS] (https://bids.neuroimaging.io/) studyfolder
 
 The data is organized in the same way as the [2nd data release](https://drive.google.com/file/d/197g9afbg9uzBt04qYYAIhmTOvI3nXrhI/view) for the dHCP and expects the nifti sourcedata files to be located in the BIDS folder /sourcedata (SIC!). Processed data/Processing pipelines store results in /derivatives
 
