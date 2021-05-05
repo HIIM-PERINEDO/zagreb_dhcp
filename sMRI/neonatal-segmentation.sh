@@ -80,11 +80,11 @@ if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 #source ~/Software/DrawEM/parameters/path.se
 
 # Update T2 to point to T2 basename
-T2=`basename $T2 .nii.gz`
+T2base=`basename $T2 .nii.gz`
 
 ################################################################
 ## 1. Run neonatal-segmentation
-if [ -f $datadir/segmentations/${T2}_all_labels.nii.gz ];then
+if [ -f $datadir/segmentations/${T2base}_all_labels.nii.gz ];then
     echo "Segmentation already run/exists in $datadir"
 else
     if [ "$mask" = "" ];then
@@ -109,29 +109,29 @@ if [ ! -d 5TT ];then mkdir 5TT; fi
 # Path to LUTs for conversion
 LUTdir=$codedir/../label_names/$atlas
 
-if [ ! -f 5TT/${T2}_5TT.nii.gz ]; then
+if [ ! -f 5TT/${T2base}_5TT.nii.gz ]; then
     # NOTE - for both all_labels_2_5TT.txt and all_labels_2_5TT_sgm_amyg_hipp.txt
     # 1 - Converts Intra-cranial-background to WM - This converts dWM properly (in tissue_labels => sGM) but there can be some extra-cerebral tissue that becomes included in WM! Check results!!
     # 2 - Converts cerebellum to subcortical-GM
     # NOTE - for all_labels_2_5TT_sgm_amyg_hipp.txt
     # 3 - Converts Amygdala and Hippocampi to subcortical-GM (change by using LUT all_labels_2_5TT.txt)
-    labelconvert segmentations/${T2}_all_labels.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT/${T2}_5TTtmp.nii.gz
+    labelconvert segmentations/${T2base}_all_labels.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT/${T2base}_5TTtmp.nii.gz
     
     # Break up 5TTtmp in its individual components
-    mrcalc 5TT/${T2}_5TTtmp.nii.gz 1 -eq 5TT/${T2}_5TTtmp_01.nii.gz #cGM
-    mrcalc 5TT/${T2}_5TTtmp.nii.gz 2 -eq 5TT/${T2}_5TTtmp_02.nii.gz #sGM
-    mrcalc 5TT/${T2}_5TTtmp.nii.gz 3 -eq 5TT/${T2}_5TTtmp_03.nii.gz #WM
-    mrcalc 5TT/${T2}_5TTtmp.nii.gz 4 -eq 5TT/${T2}_5TTtmp_04.nii.gz #CSF
-    mrcalc T2/$T2.nii.gz 0 -mul 5TT/${T2}_5TTtmp_05.nii.gz #pathological tissue - create image with 0:s
+    mrcalc 5TT/${T2base}_5TTtmp.nii.gz 1 -eq 5TT/${T2base}_5TTtmp_01.nii.gz #cGM
+    mrcalc 5TT/${T2base}_5TTtmp.nii.gz 2 -eq 5TT/${T2base}_5TTtmp_02.nii.gz #sGM
+    mrcalc 5TT/${T2base}_5TTtmp.nii.gz 3 -eq 5TT/${T2base}_5TTtmp_03.nii.gz #WM
+    mrcalc 5TT/${T2base}_5TTtmp.nii.gz 4 -eq 5TT/${T2base}_5TTtmp_04.nii.gz #CSF
+    mrcalc T2/$T2base.nii.gz 0 -mul 5TT/${T2base}_5TTtmp_05.nii.gz #pathological tissue - create image with 0:s
     # and put together in 4D 5TT-file
-    mrcat -axis 3  5TT/${T2}_5TTtmp_0*.nii.gz 5TT/${T2}_5TT.nii.gz
+    mrcat -axis 3  5TT/${T2base}_5TTtmp_0*.nii.gz 5TT/${T2base}_5TT.nii.gz
     # remove tmp-files
     rm 5TT/*tmp*
     
     # Create some 5TT maps for visualization
-    if [ ! -f 5TT/${T2}_5TTvis.nii.gz ];then
-	5tt2vis 5TT/${T2}_5TT.nii.gz 5TT/${T2}_5TTvis.nii.gz;
-	5tt2gmwmi 5TT/${T2}_5TT.nii.gz 5TT/${T2}_5TTgmwmi.nii.gz;
+    if [ ! -f 5TT/${T2base}_5TTvis.nii.gz ];then
+	5tt2vis 5TT/${T2base}_5TT.nii.gz 5TT/${T2base}_5TTvis.nii.gz;
+	5tt2gmwmi 5TT/${T2base}_5TT.nii.gz 5TT/${T2base}_5TTgmwmi.nii.gz;
     fi
 fi
 
