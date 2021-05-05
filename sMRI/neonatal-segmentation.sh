@@ -12,8 +12,8 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
   age				Age at scanning in weeks (e.g. 40)
 Options:
-  -T2				T2 image to segment (default: derivatives/sMRI_preproc/sub-sID/ses-ssID/sub-ssID_ses-ssID_desc-preproc_T2w.nii.gz)
-  -m / -mask			mask (default: is no mask) #derivatives/sMRI_preproc/sub-sID/ses-ssID/sub-ssID_ses-ssID_space-T2w_mask.nii.gz)
+  -T2				T2 image to segment (default: derivatives/sMRI/preproc/sub-sID/ses-ssID/sub-ssID_ses-ssID_desc-preproc_T2w.nii.gz)
+  -m / -mask			mask (default: is no mask) #derivatives/sMRI/preproc/sub-sID/ses-ssID/sub-ssID_ses-ssID_space-T2w_mask.nii.gz)
   -d / -data-dir  <directory>   The directory used to run the script and output the files (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID)
   -a / -atlas	  		Atlas to use for DrawEM neonatal segmentation (default: ALBERT)    
   -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
@@ -31,9 +31,9 @@ ssID=$2
 age=$3
 
 currdir=`pwd`
-T2=derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
+T2=derivatives/sMRI/preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
 #mask="";
-mask=derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz
+mask=derivatives/sMRI/preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz
 datadir=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID
 threads=10
 atlas=ALBERT
