@@ -94,7 +94,7 @@ else
     else
 	# Use provided mask
 	mirtk neonatal-segmentation $T2 $age -m $mask -d $datadir -atlas $atlas -p 1 -c 0 -t $threads \
-§	      > $logdir/sub-${sID}_ses-${ssID}_$script.txt 2>&1;
+	      > $logdir/sub-${sID}_ses-${ssID}_$script.txt 2>&1;
     fi
 fi
 
