@@ -183,7 +183,7 @@ fi
 # Create b0APPA.mif.gz to go into TOPUP
 if [ ! -f b0APPA.mif.gz ];then
     echo "Create a PErevPE pair of SE images to use with TOPUP
-1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif into $datadir/preproc
+1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/preproc
 2. Run this script again.    
     	 "
     exit;
