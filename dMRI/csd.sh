@@ -1,5 +1,5 @@
 #!/bin/bash
-# Zagreb Collab dhcp
+# Zagreb Collab dhcp - PMR
 #
 usage()
 {
@@ -8,13 +8,13 @@ usage()
 Estimation of CSD
 
 Arguments:
-  sID				Subject ID (e.g. PK356) 
-  ssID                       	Session ID (e.g. MR1)
+  sID				Subject ID (e.g. PMRABC) 
+  ssID                       	Session ID (e.g. MR2)
 Options:
-  -dwi				Preprocessed dMRI data serie (default: derivatives/dMRI/sub-sID/ses-ssID/dwi_preproc_norm.mif.gz)
-  -mask				Mask for dMRI data (default: derivatives/dMRI/sub-sID/ses-ssID/mask.mif.gz)
+  -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi_preproc_norm.mif.gz)
+  -mask				Mask for dMRI data (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/mask.mif.gz)
   -response			Response function (tournier or msmt_5tt) (default: msmt_5tt)
-  -5TT				5TT in dMRI space (default: derivatives/dMRIess/sub-sID/ses-ssID/act/5TT.mif.gz)
+  -5TT				5TT in dMRI space (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/act/5TT.mif.gz)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
@@ -140,11 +140,11 @@ if [[ $response = msmt_5tt ]]; then
     shview  csd/${response}_wm.txt
     shview  csd/${response}_gm.txt
     shview  csd/${response}_csf.txt
-    mrview  meanb0_brain.nii.gz -roi.load csd/${response}_sf.mif -roi.opacity 0.5 -mode 2
+    mrview  meanb0_brain.nii.gz -overlay.load csd/${response}_sf.mif -overlay.opacity 0.5 -mode 2
     # Calculate ODFs
     echo "Calculating CSD using ACT and $response"
     dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz csd/${response}_wm.txt csd/csd_${response}_wm.mif.gz csd/${response}_gm.txt csd/csd_${response}_gm.mif.gz csd/${response}_csf.txt csd/csd_${response}_csf.mif.gz
-    mrview -load meanb0_brain.nii.gz -odf.load_sh csd/csd_${response}_wm.mif.gz -mode 2
+    mrview -load meanb0_brain.nii.gz -odf.load_sh csd/csd_${response}_wm.mif.gz -mode 2;
 fi
 
 
