@@ -12,7 +12,7 @@ Arguments:
   ssID                       	Session ID (e.g. MR1)
 Options:
   -csd				CSD mif.gz-file (default: derivatives/dMRI/sub-sID/ses-ssID/csd/csd_msmt_5tt_wm.mif.gz)
-  -5TT				5TT in dMRI space (default: derivatives/dMRI/sub-sID/ses-ssID/act/5TT.mif.gz)
+  -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI/sub-sID/ses-ssID/act/5TT.mif.gz)
   -nbr				Number of streamlines in whole-brain tractogram (default: 10M)
   -threads			Number of threads for parallell processing (default: 10)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
@@ -130,7 +130,7 @@ fi
 if [ ! -f tractography/whole_brain_${nbr}_sift.tck ]; then
     count=`tckinfo tractography/whole_brain_$nbr.tck | grep \ count: | awk '{print $2}'`;
     count0p10=`echo "$count / 10" | bc`;
-    tcksift -act act/$act5tt.mif.gz -term_number $count0p10 tractography/whole_brain_$nbr.tck $csd.mif.gz tractography/whole_brain_${nbr}_sift.tck
+    tcksift -act act/$act5tt.mif.gz -term_number $count0p10 tractography/whole_brain_$nbr.tck csd/$csd.mif.gz tractography/whole_brain_${nbr}_sift.tck
 fi
 if [ ! -f tractography/whole_brain_${nbr}_sift_edit100k.tck ];then
     tckedit tractography/whole_brain_${nbr}_sift.tck -number 100k tractography/whole_brain_${nbr}_sift_edit100k.tck
