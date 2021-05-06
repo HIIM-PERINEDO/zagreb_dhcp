@@ -1,5 +1,5 @@
 #!/bin/bash
-# Zagreb Collab dhcp
+# Zagreb Collab dhcp - PMR
 #
 usage()
 {
@@ -14,16 +14,16 @@ Then tranformation into dMRI space (by updating headers = no resampling) of
 - labels parcellation image (in T2-space) created from segmentation
 
 Arguments:
-  sID				Subject ID (e.g. PK356) 
-  ssID                       	Session ID (e.g. MR1)
+  sID				Subject ID (e.g. PMRABC) 
+  ssID                       	Session ID (e.g. MR2)
 Options:
   -meanb0			Undistorted brain extracted dMRI mean b0 image  (default: derivatives/dMRI/sub-sID/ses-ssID/meanb0_brain.nii.gz)
-  -T2				T2 that has been segmented and will be registered to, should be N4-corrected brain extracted (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/N4/sub-sID_ses-ssID_T2w.nii.gz)
+  -T2				T2 that has been segmented and will be registered to, should be N4-corrected brain extracted (default: derivatives/sMRI/neonatal-segmentation/sub-sID/ses-ssID/N4/sub-sID_ses-ssID_desc-preproc_T2w.nii.gz)
   -a / -atlas			Atlas used for segmentation (options ALBERT or MCRIB) (default: ALBERT)
-  -5TT				5TT image of T2, to use for BBR reg and to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/5TT/sub-sID_ses-ssID_T2w_5TT.nii.gz)
-  -all_label			all_label file from segmentation, to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_T2w_all_labels.nii.gz)
+  -5TT				5TT image of T2, to use for BBR reg and to be transformed into dMRI space (default: derivatives/sMRI/neonatal-segmentation/sub-sID/ses-ssID/5TT/sub-sID_ses-ssID_desc-preproc_T2w_5TT.nii.gz)
+  -all_label			all_label file from segmentation, to be transformed into dMRI space (default: derivatives/sMRI/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_desc-preproc_T2w_all_labels.nii.gz)
   -all_label_LUT		LUT for all_label file (default: codedir/../label_names/ALBERT/all_labels.txt)
-  -label			label file from segmentation, to be transformed into dMRI space (default: derivatives/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_T2w_labels.nii.gz)
+  -label			label file from segmentation, to be transformed into dMRI space (default: derivatives/sMRI/neonatal-segmentation/sub-sID/ses-ssID/segmentations/sub-sID_ses-ssID_desc-preproc_T2w_labels.nii.gz)
   -label_LUT			LUT for label file (default: codedir/../label_names/ALBERT/labels.txt)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
@@ -46,13 +46,13 @@ currdir=`pwd`
 
 # Defaults
 meanb0=derivatives/dMRI/sub-$sID/ses-$ssID/meanb0.nii.gz
-T2=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/N4/sub-${sID}_ses-${ssID}_T2w.nii.gz
-allLabel=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_T2w_all_labels.nii.gz
+T2=derivatives/sMRI/neonatal-segmentation/sub-$sID/ses-$ssID/N4/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
+allLabel=derivatives/sMRI/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_desc-preproc_T2w_all_labels.nii.gz
 allLabelLUT=$codedir/../label_names/ALBERT/all_labels.txt
-label=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_T2w_labels.nii.gz
+label=derivatives/sMRI/neonatal-segmentation/sub-$sID/ses-$ssID/segmentations/sub-${sID}_ses-${ssID}_desc-preproc_T2w_labels.nii.gz
 labelLUT=$codedir/../label_names/ALBERT/labels.txt
 atlas=ALBERT
-act5tt=derivatives/neonatal-segmentation/sub-$sID/ses-$ssID/5TT/sub-${sID}_ses-${ssID}_T2w_5TT.nii.gz
+act5tt=derivatives/sMRI/neonatal-segmentation/sub-$sID/ses-$ssID/5TT/sub-${sID}_ses-${ssID}_desc-preproc_T2w_5TT.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 
 while [ $# -gt 0 ]; do
@@ -149,16 +149,19 @@ cd $datadir
 # Do registrations
 cd registration
 
+if [ ! -d reg ]; then mkdir reg; fi
+
 # Do brain extractions of meanb0 and T2 before linear registration
 if [ ! -f ${meanb0}_brain.nii.gz ];then
     bet ../$meanb0.nii.gz ${meanb0}_brain.nii.gz -F -R
 fi
+# NOTE - desc-preproc is brain extracted, make this mock with copying. 
 if [ ! -f ${T2}_brain.nii.gz ];then
-    bet $T2.nii.gz ${T2}_brain.nii.gz -F -R
+    cp $T2.nii.gz ${T2}_brain.nii.gz
 fi
      
 # Registration
-if [ ! - f reg/${meanb0}_2_${T2}_flirt-dof6.mat ];then 
+if [ ! -f reg/${meanb0}_2_${T2}_flirt-dof6.mat ];then 
     echo "Rigid-body linear registration using FSL's FLIRT"
     flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -omat reg/${meanb0}_2_${T2}_flirt-dof6.mat
 fi
