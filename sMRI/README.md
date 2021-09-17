@@ -10,7 +10,7 @@ Run script process.sh
 - Transforms FLAIR into T2w-space (3D-T2w) and creates adapted brain mask from transformed FLAIR
 
 ## 2. Neonatal segmentation
-Run script neonatal-segmentation.sh
+Run script neonatal-segmentation.sh (for MIRTK DrawEM) och dhcp_structural_pipeline.sh (for dHCP structural pipeline)
 
 This runs DrawEM algorithm on anatomical T2w data.
 
