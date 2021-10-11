@@ -9,10 +9,10 @@ Conversion of DICOMs to BIDS and validation of BIDS dataset
 The scripts uses Docker and heudiconv
 - DICOMs are expected to be in $studyfolder/dicomdir
 - Heuristics-files are located in code-subfolder $codedir/heudiconv_heuristics
-- NIfTIs are written into a BIDS-organised folder $studyfolder/sourcedata (SIC!)
+- NIfTIs are written into a BIDS-organised folder $studyfolder/rawdata
 
 Arguments:
-  sID				Subject ID (e.g. PK356) 
+  sID				Subject ID (e.g. PMR002) 
   ssID                       	Session ID (e.g. MR2)
 Options:
   -h / -help / --help           Print usage.
@@ -30,7 +30,7 @@ ssID=$2
 # Define Folders
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 studydir=`pwd` #studydir=`dirname -- "$codedir"`
-sourcedatadir=$studydir/sourcedata;
+sourcedatadir=$studydir/rawdata;
 dcmdir=$studydir/dicomdir;
 logdir=${studydir}/derivatives/preprocessing_logs/sub-${sID}/ses-${ssID}
 scriptname=`basename $0 .sh`
