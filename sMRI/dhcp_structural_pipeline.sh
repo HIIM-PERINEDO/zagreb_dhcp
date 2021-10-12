@@ -13,9 +13,9 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
   age				Age at scanning in weeks (e.g. 40)
 Options:
-  -T2				T2 image to segment with full path (default: $studyfolder/derivatives/sMRI/preproc/sub-\$sID/ses-\$ssID/sub-\$sID_ses-\$ssID_desc-preproc_T2w.nii.gz)
-  -T1				T1 image to segment with full path (default: $studyfolder/derivatives/sMRI/preproc/sub-\$sID/ses-\$ssID/sub-\$sID_ses-\$ssID_T1w.nii.gz)
-  -d / -data-dir  <directory>   The directory used to run the script and output the files with full path (default: $studyfolder/derivatives/sMRI/dhcp_structural_pipeline/sub-\$sID/ses-\$ssID)
+  -T2				T2 image to segment with full path (default: $studyfolder/derivatives/sMRI_preproc/sub-\$sID/ses-\$ssID/sub-\$sID_ses-\$ssID_desc-preproc_T2w.nii.gz)
+  -T1				T1 image to segment with full path (default: $studyfolder/derivatives/sMRI_preproc/sub-\$sID/ses-\$ssID/sub-\$sID_ses-\$ssID_T1w.nii.gz)
+  -d / -data-dir  <directory>   The directory used to run the script and output the files with full path (default: $studyfolder/derivatives/dhcp_structural_pipeline/sub-\$sID/ses-\$ssID)
   -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
   -h / -help / --help           Print usage.
 "
@@ -34,9 +34,9 @@ age=$3
 currdir=`pwd`
 # NOTE - need fullpath to comply with Docker --volumes
 studyfolder=$currdir;
-T2=$studyfolder/derivatives/sMRI/preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
-T1=$studyfolder/derivatives/sMRI/preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_T1w.nii.gz
-datadir=$studyfolder/derivatives/sMRI/dhcp_structural_pipeline
+T2=$studyfolder/derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
+T1=$studyfolder/derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_T1w.nii.gz
+datadir=$studyfolder/derivatives/dhcp_structural_pipeline
 threads=10
 
 # check whether the different tools are set and load parameters
@@ -111,7 +111,7 @@ else
 	       --volume $datadir:/dataOut \
 	       --volume $T2folder:/T2folder \
 	       biomedia/dhcp-structural-pipeline:latest \
-	       sub-$sID ses-$ssID $age \
+	       $sID $ssID $age \
 	       -T2 /T2folder/$T2file \
 	       -t $threads \
 	       -d /dataOut \
@@ -125,7 +125,7 @@ else
 	       --volume $T2folder:/T2folder \
 	       --volume $T1folder:/T1folder \
 	       biomedia/dhcp-structural-pipeline:latest \
-	       sub-$sID ses-$ssID $age \
+	       $sID $ssID $age \
 	       -T2 /T2folder/$T2file \
 	       -T1 /T1folder/$T1file \
 	       -t $threads \

@@ -63,7 +63,7 @@ docker run --name heudiconv_container \
            --volume $sourcedatadir:/dataOut \
            nipy/heudiconv \
                -d /dataIn/sub-{subject}/ses-{session}/*/*.dcm \
-               -f /code/heudiconv_heuristics/zagreb_heuristic.py \
+               -f /code/heudiconv_heuristics/zagreb_heuristic_run-index.py \
                -s ${sID} \
                -ss ${ssID} \
                -c dcm2niix \

@@ -12,8 +12,8 @@ Arguments:
   sID				Subject ID (e.g. PMRXYZ)
   ssID				Session ID (e.g. MR2) 
 Options:
-  -T2				T2 image (default: sourcedata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_T2w.nii.gz)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/sMRI/preproc)
+  -T2				T2 image (default: rawdata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_acq-MCRIB_run-1_T2w.nii.gz)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/sMRI_preproc)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -28,8 +28,8 @@ ssID=$2
 
 # Defaults
 currdir=`pwd`
-t2w=sourcedata/sub-$sID/ses-$ssID/anat/sub-${sID}_ses-${ssID}_T2w.nii.gz
-datadir=derivatives/sMRI/preproc/sub-$sID/ses-$ssID
+t2w=rawdata/sub-$sID/ses-$ssID/anat/sub-${sID}_ses-${ssID}_acq-MCRIB_run-1_T2w.nii.gz
+datadir=derivatives/sMRI_preproc/sub-$sID/ses-$ssID
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -88,8 +88,8 @@ cd $datadir
 image=$t2w;
 if [[ $image = "" ]]; then echo "No T2w image"; exit;
 else
-    if [[ $image = sub-${sID}_ses-${ssID}_T2w ]] || [[ $image = sub-${sID}_ses-${ssID}_acq-spc_T2w ]]; then
-	# BIDS compliant highres name 
+    if [[ `echo $image | sed 's/\_/\ /g' | awk '{print $NF}'` = T2w ]]; then
+	# BIDS compliant highres name by adding desc-hires in front of T2w 
 	highres=`echo $image | sed 's/\_T2w/\_desc\-hires\_T2w/g'`
     else
 	# or else, just add desc-highres before the file name
