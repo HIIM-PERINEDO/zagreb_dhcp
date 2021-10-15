@@ -29,18 +29,18 @@ ssID=$2
 
 # Define Folders
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-studydir=`pwd` #studydir=`dirname -- "$codedir"`
-sourcedatadir=$studydir/rawdata
+studydir=$PWD #studydir=`dirname -- "$codedir"`
+rawdatadir=$studydir/rawdata
 dcmdir=$studydir/sourcedata
 logdir=${studydir}/derivatives/preprocessing_logs/sub-${sID}/ses-${ssID}
 scriptname=`basename $0 .sh`
 
-if [ ! -d $sourcedatadir ]; then mkdir -p $sourcedatadir; fi
+if [ ! -d $rawdatadir ]; then mkdir -p $rawdatadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 
 # We place a .bidsignore here
-if [ ! -f $sourcedatadir/.bidsignore ]; then
-echo -e "# Exclude following from BIDS-validator\n" > $sourcedatadir/.bidsignore;
+if [ ! -f $rawdatadir/.bidsignore ]; then
+echo -e "# Exclude following from BIDS-validator\n" > $rawdatadir/.bidsignore;
 fi
 
 # we'll be running the Docker containers as yourself, not as root:
@@ -60,10 +60,10 @@ docker run --name heudiconv_container \
            --volume $studydir:/base \
 	   --volume $codedir:/code \
            --volume $dcmdir:/dataIn:ro \
-           --volume $sourcedatadir:/dataOut \
+           --volume $rawdatadir:/dataOut \
            nipy/heudiconv \
                -d /dataIn/sub-{subject}/ses-{session}/*/*.dcm \
-               -f /code/heudiconv_heuristics/zagreb_heuristic_run-index.py \
+               -f /code/heudiconv_heuristics/zagreb_heuristic_run-index_dir-PA.py \
                -s ${sID} \
                -ss ${ssID} \
                -c dcm2niix \
@@ -74,14 +74,14 @@ docker run --name heudiconv_container \
            
 # heudiconv makes files read only
 #    We need some files to be writable, eg for dHCP pipelines
-chmod -R u+wr,g+wr $sourcedatadir
+chmod -R u+wr,g+wr $rawdatadir
 
 
 # We run the BIDS-validator:
 docker run --name BIDSvalidation_container \
            --user $userID \
            --rm \
-           --volume $sourcedatadir:/data:ro \
+           --volume $rawdatadir:/data:ro \
            bids/validator \
                /data \
            > ${studydir}/derivatives/bids-validator_report.txt 2>&1

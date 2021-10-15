@@ -45,9 +45,6 @@ def infotodict(seqinfo):
     
     # DWI
     dwi_ap = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_dir-AP_run-{item:01d}_dwi')
-    # FL - Problem with dwi_pa as this contains only 1 b0 => no bvecs/bvals are created which makes it a non-valid _dwi file
-    # This is only a problem when the sole volume in dir-AP_sbref is corrupted and fmap_se cannot be used for some reason, and another b0 in MB-collected dir-AP_dwi might have to be used for TOPUP/EDDY. This would have to be combined with MB-collected dir-PA_dwi
-    #dwi_pa = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_dir-PA_run-{item:01d}_dwi')
     
     # fMRI
     rest_ap = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_dir-AP_run-{item:01d}_bold')
@@ -56,6 +53,10 @@ def infotodict(seqinfo):
     # FMAPs
     fmap_se_ap = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-se_dir-AP_run-{item:01d}_epi')
     fmap_se_pa = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-se_dir-PA_run-{item:01d}_epi')
+    # FL - Problem with dwi_pa as this contains only 1 b0 => no bvecs/bvals are created which makes it a non-valid _dwi 
+    # This is only a problem when the sole volume in dir-AP_sbref is corrupted and fmap_se cannot be used for some reason, and another b0 in MB-collected dir-AP_dwi might have to be used for TOPUP/EDDY. This would have to be combined with MB-collected dir-PA_dwi
+    # so we put in the fmaps    
+    fmap_dwi_pa = create_key('sub-{subject}/{session}/fmap/sub-{subject}_{session}_acq-dwi_dir-PA_run-{item:01d}_epi')
     
     # SBRefs
     dwi_ap_sbref = create_key('sub-{subject}/{session}/dwi/sub-{subject}_{session}_dir-AP_run-{item:01d}_sbref')
@@ -63,7 +64,7 @@ def infotodict(seqinfo):
     rest_ap_sbref = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_dir-AP_run-{item:01d}_sbref')
     rest_pa_sbref = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_dir-PA_run-{item:01d}_sbref')
 
-    info = {t1wmprage: [], t2w: [], t2wspc: [], t2wcorclin: [], t2wtraclin: [], flair: [], dwi_ap: [], rest_ap: [], rest_pa: [], fmap_se_ap: [], fmap_se_pa: [], dwi_ap_sbref: [], dwi_pa_sbref: [], rest_ap_sbref: [], rest_pa_sbref: []}
+    info = {t1wmprage: [], t2w: [], t2wspc: [], t2wcorclin: [], t2wtraclin: [], flair: [], dwi_ap: [], fmap_dwi_pa: [], rest_ap: [], rest_pa: [], fmap_se_ap: [], fmap_se_pa: [], dwi_ap_sbref: [], dwi_pa_sbref: [], rest_ap_sbref: [], rest_pa_sbref: []}
     #info = {t1wmprage: [], t2w: [], dwi: [], dwi_sbref: [], rest: [], rest_sbref: [], fmap_se}
     last_run = len(seqinfo)
 
@@ -117,9 +118,6 @@ def infotodict(seqinfo):
         if (s.dim4 == 107) and ('dMRI_dir106_AP_2x2x2' in s.series_description) and ('ORIGINAL' in s.image_type):
             info[dwi_ap].append(s.series_id) # append if multiple series meet criteria
             
-        # dir PA
-        #if (s.dim4 == 1) and ('dMRI_dir106_PA_2x2x2' in s.series_description) and ('DIFFUSION' in s.image_type):
-        #    info[dwi_ap].append(s.series_id) # append if multiple series meet criteria
             
         # rs-fMRI
         # dir AP
@@ -130,13 +128,17 @@ def infotodict(seqinfo):
             info[rest_pa].append(s.series_id) # append if multiple series meet criteria
 
         # FMAPs
-        # dir AP
+        # SE dir-AP
         if ('SpinEchoFieldMap_AP' in s.series_description):
             info[fmap_se_ap].append(s.series_id)
-        # dir PA
+        # SE dir-PA
         if ('SpinEchoFieldMap_PA' in s.series_description):
             info[fmap_se_pa].append(s.series_id)
-    
+        # DWI dir-PA - NOTE that we have to place these here as they cannot easily by put in the BIDS /dwi folder
+        if (s.dim4 == 1) and ('dMRI_dir106_PA_2x2x2' in s.series_description) and ('DIFFUSION' in s.image_type):
+            info[fmap_dwi_pa].append(s.series_id) # append if multiple series meet criteria
+
+            
         # SBREFs
         # dir AP
         if ('dMRI_dir106_AP_2x2x2_SBRef' in s.series_description):
