@@ -2,7 +2,7 @@ This folder contains scripts that uses [heudiconv](https://heudiconv.readthedocs
 
 - DICOMs are expected to be in "studyfolder"/dicomdir
 - Heuristics-files are located in code-subfolder bids/heudiconv_heuristics
-- NIfTIs are written into a BIDS-organised folder "studyfolder"/sourcedata (SIC!)
+- NIfTIs are written into a BIDS-organised folder "studyfolder"/rawdata
 
 BIDS format: https://bids-specification.readthedocs.io/en/stable/
 
