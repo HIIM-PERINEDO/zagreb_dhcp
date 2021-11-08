@@ -61,7 +61,8 @@ Subject:    $sID
 Session:    $ssID
 Age:        $age
 T2:         $T2 
-Mask:	    $mask 
+Mask:	    $mask
+Atlas:	    $atlas
 Directory:  $datadir 
 Threads:    $threads
 $BASH_SOURCE $command
