@@ -12,7 +12,7 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
 Options:
   -s / -seg-dir <directory>	Root directory were the neonatal-segmentaion resides (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation)		
-  -T2  				T2 (N4 biasfield corrected) that was used for segmentation (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation/N4/sub-sID_ses-ssID_desc-hires_T2w.nii.gz)		
+  -T2  				T2 (N4 biasfield corrected) that was used for segmentation (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation/N4/sub-sID_ses-ssID_desc-preproc_T2w.nii.gz)		
   -a / -atlas <directory>	DrawEM processed M-CRIB atlas location (default: $HOME/Research/Atlases/M-CRIB/derivatives/neonatal-segmentation_DrawEMv1p3_ALBERT_M-CRIB_preproc_neonatal-5TT)
   -d / -data-dir <directory>	Data dir for output (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation)
   -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
@@ -31,7 +31,7 @@ ssID=$2
 shift; shift
 
 segdir=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation
-T2=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/N4/sub-${sID}_ses-${ssID}_desc-hires_T2w.nii.gz
+T2=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/N4/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
 atlasdir=$HOME/Research/Atlases/M-CRIB/derivatives/neonatal-segmentation_DrawEMv1p3_ALBERT_M-CRIB_preproc_neonatal-5TT
 datadir=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation
 threads=10
