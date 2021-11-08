@@ -108,7 +108,7 @@ if [ ! -f 5TT_$atlas/${T2base}_5TT.mif.gz ]; then
     mrcalc 5TT_$atlas/${T2base}_5TTtmp.mif 2 -eq 5TT_$atlas/${T2base}_5TTtmp_02.mif #sGM
     mrcalc 5TT_$atlas/${T2base}_5TTtmp.mif 3 -eq 5TT_$atlas/${T2base}_5TTtmp_03.mif #WM
     mrcalc 5TT_$atlas/${T2base}_5TTtmp.mif 4 -eq 5TT_$atlas/${T2base}_5TTtmp_04.mif #CSF
-    mrcalc T2/$T2base.nii.gz 0 -mul 5TT_$atlas/${T2base}_5TTtmp_05.nii.gz #pathological tissue - create image with 0:s
+    mrcalc T2/$T2base.nii.gz 0 -mul 5TT_$atlas/${T2base}_5TTtmp_05.mif #pathological tissue - create image with 0:s
     # and put together in 4D 5TT-file
     mrcat -axis 3  5TT_$atlas/${T2base}_5TTtmp_0*.mif 5TT_$atlas/${T2base}_5TT.mif.gz
     # remove tmp-files
