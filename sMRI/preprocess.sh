@@ -13,7 +13,7 @@ Arguments:
   ssID				Session ID (e.g. MR2) 
 Options:
   -T2				T2 image (default: rawdata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_acq-MCRIB_run-1_T2w.nii.gz)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/sMRI_preproc)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/sMRI/preproc)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -27,9 +27,9 @@ sID=$1
 ssID=$2
 
 # Defaults
-currdir=`pwd`
+currdir=$PWD
 t2w=rawdata/sub-$sID/ses-$ssID/anat/sub-${sID}_ses-${ssID}_acq-MCRIB_run-1_T2w.nii.gz
-datadir=derivatives/sMRI_preproc/sub-$sID/ses-$ssID
+datadir=derivatives/sMRI/preproc/sub-$sID/ses-$ssID
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
