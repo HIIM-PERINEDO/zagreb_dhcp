@@ -5,8 +5,8 @@ usage()
 {
   base=$(basename "$0")
   echo "usage: $base subjectID sessionID age [options]
-Script to run the mirtk neonatal-segmentation on sMRI_processed data
-Creates a 5TT equivalent from resulting anatomical parcellation (all_labels)
+Script to run the mirtk neonatal-segmentation (DrawEM) on processed sMRI data
+
 Arguments:
   sID				Subject ID (e.g. PMRABC) 
   ssID                       	Session ID (e.g. MR2)
