@@ -95,7 +95,7 @@ currdir=$PWD
 if [ ! -d $neo5ttdir ]; then mkdir -p $neo5ttdir; fi
 
 # Relevant files to copy and create
-T2base=`basename $T2 nii.gz`
+T2base=`basename $T2 .nii.gz`
 T2N4=${T2base}_N4; #adding _N4 to show that it is N4 biasfield corrected and comply with $atlasdir
 brainmaskdrawem=desc-drawembrain_mask; #name compliant with $atlasdir
 
