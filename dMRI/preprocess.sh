@@ -1,5 +1,5 @@
 #!/bin/bash
-# Zagreb Collab dhcp
+# Zagreb Collab dhcp - PMR
 #
 usage()
 {
@@ -11,15 +11,15 @@ Script to preprocess dMRI data
 3. N4 biasfield correction, Normalisation
 
 Arguments:
-  sID				Subject ID (e.g. PK356) 
-  ssID                       	Session ID (e.g. MR1)
+  sID				Subject ID (e.g. PMR001) 
+  ssID                       	Session ID (e.g. MR2)
 Options:
-  -dwi				dMRI AP data (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_dwi.nii.gz)
-  -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_sbref.nii.gz)
-  -dwiPA			dMRI PA data, potentially for TOPUP  (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_dwi.nii.gz)
-  -dwiPAsbref			dMRI PA SBRef, potentially for registration and TOPUP  (default: sourcedata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_sbref.nii.gz)
-  -seAP				Spin-echo field map AP, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-AP_epi.nii.gz)
-  -sePA				Spin-echo field map PA, for TOPUP (default: sourcedata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-PA_epi.nii.gz)
+  -dwi				dMRI AP data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
+  -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_sbref.nii.gz)
+  -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_run-1_dwi.nii.gz)
+  -dwiPAsbref			dMRI PA SBRef, potentially for registration and TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_run-1_sbref.nii.gz)
+  -seAP				Spin-echo field map AP, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-AP_run-1_epi.nii.gz)
+  -sePA				Spin-echo field map PA, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-PA_run-1_epi.nii.gz)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
@@ -33,15 +33,15 @@ command=$@
 sID=$1
 ssID=$2
 
-currdir=`pwd`
+currdir=$PWD
 
 # Defaults
-dwi=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_dwi.nii.gz
-dwiPA=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_dwi.nii.gz
-dwiAPsbref=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_sbref.nii.gz
-dwiPAsbref=sourcedata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_sbref.nii.gz
-seAP=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_epi.nii.gz
-sePA=sourcedata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_epi.nii.gz
+dwi=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
+dwiPA=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_dwi.nii.gz
+dwiAPsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_sbref.nii.gz
+dwiPAsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_sbref.nii.gz
+seAP=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_run-1_epi.nii.gz
+sePA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_run-1_epi.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 
 # check whether the different tools are set and load parameters
@@ -100,14 +100,17 @@ echo
 ##################################################################################
 # 0. Copy to files to datadir/preproc (incl .json and bvecs/bvals files if present at original location)
 
-if [ ! -d $datadir/preproc ]; then mkdir -p $datadir/preproc; fi
+if [ ! -d $datadir/orig ]; then mkdir -p $datadir/orig; fi
 
 filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
 for file in $filelist; do
     filebase=`basename $file .nii.gz`;
     filedir=`dirname $file`
-    cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/preproc/.
-
+    if [ ! -f $filedir/$filebase.bval ]; then
+	cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/orig/.
+    else
+	cp $file $filedir/$filebase.json $datadir/orig/.
+    fi
 done
 
 #Then update variables to only refer to filebase names (instead of path/file)
@@ -120,16 +123,19 @@ sePA=`basename $sePA .nii.gz`
 
 
 ##################################################################################
-# 0. Create dwi.mif.gz to work with
-cd $datadir/preproc
+# 0. Create dwi.mif.gz to work with in /preproc
+
+if [ ! -d $datadir/preproc ]; then mkdir -p $datadir/preproc; fi
+
+cd $datadir
 
 if [[ $dwi = "" ]];then
     echo "No dwi data provided";
     exit;
 else
     # Create a dwi.mif.gz-file to work with
-    if [ ! -f dwi.mif.gz ]; then
-	mrconvert -json_import $dwi.json -fslgrad $dwi.bvec $dwi.bval $dwi.nii.gz dwi.mif.gz
+    if [ ! -f preproc/dwi.mif.gz ]; then
+	mrconvert -json_import orig/$dwi.json -fslgrad orig/$dwi.bvec orig/$dwi.bval orig/$dwi.nii.gz preproc/dwi.mif.gz
     fi
 fi
 
@@ -168,17 +174,23 @@ cd $currdir
 
 ##################################################################################
 # 2. TOPUP and EDDY for Motion- and susceptibility distortion correction
-cd $datadir/preproc
 
-if [ ! -f seAP.mif.gz ]; then
-    mrconvert -json_import $seAP.json $seAP.nii.gz seAP.mif.gz
+# Work with SE PErevPE fmap
+cd $datadir/orig
+if [ ! -f seAPtmp.mif ]; then
+    mrconvert -json_import $seAP.json $seAP.nii.gz seAPtmp.mif
 fi
 if [ ! -f sePA.mif.gz ]; then
-    mrconvert -json_import $sePA.json $sePA.nii.gz sePA.mif.gz
+    mrconvert -json_import $sePA.json $sePA.nii.gz sePAtmp.mif
 fi
-if [ ! -f seAPPA.mif.gz ]; then
-    mrcat seAP.mif.gz sePA.mif.gz seAPPA.mif.gz
+if [ ! -f ../preproc/seAPPA.mif.gz ]; then
+    mrcat seAPtmp.mif sePAtmp.mif ../preproc/seAPPA.mif.gz
 fi
+rm se*tmp.mif
+cd $currdir
+
+# Work with b0 PErevPE fmap
+cd $datadir/preproc
 
 # Create b0APPA.mif.gz to go into TOPUP
 if [ ! -f b0APPA.mif.gz ];then
