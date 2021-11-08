@@ -44,7 +44,7 @@ currdir=$PWD
 
 while [ $# -gt 0 ]; do
     case "$1" in
-    	-t2 shift; T2=$1; ;;
+    	-t2) shift; T2=$1; ;;
 	-s|-seg-dir) shift; segdir=$1; ;;
 	-m|-mask) shift; mask=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
