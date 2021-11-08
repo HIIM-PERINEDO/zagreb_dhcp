@@ -74,8 +74,8 @@ if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 # Make sure mirtk neonatal-segmentation is in the path
 #source ~/Software/DrawEM/parameters/path.se
 
-# Update T2 to point to T2 basename
-T2base=`basename $T2 .nii.gz`
+# Update T2seg to point to T2seg basename
+T2base=`basename $T2seg .nii.gz`
 
 ################################################################
 ## 1. Create 5TT image
@@ -96,7 +96,7 @@ if [ ! -f 5TT_$atlas/${T2base}_5TT.mif.gz ]; then
     # 2 - Converts cerebellum to subcortical-GM
     # NOTE - for all_labels_2_5TT_sgm_amyg_hipp.txt
     # 3 - Converts Amygdala and Hippocampi to subcortical-GM (change by using LUT all_labels_2_5TT.txt)
-    labelconvert segmentations/${T2base}_all_labels.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT_$atlas/${T2base}_5TTtmp.mif
+    labelconvert segmentations/${T2base}.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT_$atlas/${T2base}_5TTtmp.mif
     
     # Break up 5TTtmp in its individual components
     mrcalc 5TT_$atlas/${T2base}_5TTtmp.mif 1 -eq 5TT_$atlas/${T2base}_5TTtmp_01.mif #cGM
