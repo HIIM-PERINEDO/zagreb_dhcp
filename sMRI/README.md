@@ -20,10 +20,12 @@ Preferably tra T2w since has more homogenous signal => better cortical segmentat
 - The current parameters from DrawEM in dhcp performs better than DrawEM1p3. To run dhcp's neonatal-segmentation, run script neonatal-segmentation_dhcp-structural-pipeline_only.sh
 
 ## 3. Neonatal-5TT
-Run script neonatal-5TT.sh
+Run script neonatal-5TT_DrawEM/MCRIB.sh
 
-NOTE - should be moved to /dMRI
+### 5TT_DrawEM
+Converts a DrawEM segmentation into a 5TT file/s
 
+### 5TT_neonatal-5TT
 This runs an adapted version of Manuel Bleza's procedure [neonatal-5TT](https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve MRtrix 5TT image
 
 To avoid ANTsJointLabelFusion step, run script neonatal-5TT_noANTsJointLabelFusion.sh
