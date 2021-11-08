@@ -26,6 +26,8 @@ command=$@
 sID=$1
 ssID=$2
 
+shift; shift
+
 currdir=$PWD
 T2seg=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/segmentations/sub-${sID}_ses-${ssID}_desc-preproc_T2w_all_labels.nii.gz
 mask=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/segmentations/sub-${sID}_ses-${ssID}_desc-preproc_brain_mask.nii.gz
@@ -37,7 +39,6 @@ atlas=ALBERT
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 currdir=$PWD
 
-shift; shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-s|-seg-file) shift; T2seg=$1; ;;
