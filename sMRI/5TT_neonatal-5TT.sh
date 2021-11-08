@@ -121,7 +121,7 @@ cd  $neo5ttdir
 for i in $(seq -f %02g 1 10); do
     if [ ! -f ${T2N4}_M-CRIB_P${i}_T2_hist.nii.gz ]; then
 	mrhistmatch -mask_input $atlasdir/M-CRIB_P${i}_T2_$brainmaskdrawem.nii.gz \
-		    -mask_target ${T2}_$brainmaskdrawem.nii.gz \
+		    -mask_target ${T2base}_$brainmaskdrawem.nii.gz \
 		    scale $atlasdir/M-CRIB_P${i}_T2_N4.nii.gz $T2N4.nii.gz \
 		    ${T2N4}_M-CRIB_P${i}_T2_hist.nii.gz
     fi
