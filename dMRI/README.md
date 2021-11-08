@@ -6,6 +6,7 @@ Run scripts in the following order:
 
 1. preprocess.sh
 2. registration.sh
-3. csd.sh
-4. tractography.sh
-5. connectome.sh
+3. neonatal-5TT.sh
+4. csd.sh
+5. tractography.sh
+6. connectome.sh
