@@ -11,7 +11,9 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
 
 Options:
-  -s / -seg-file		The DrawEM all_labels segmentation file (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation/segmentations)
+  -t2				The T2 image that was segmented (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation/T2/sub-sID_ses-ssID_desc-hires_T2w.nii.gz)
+  -s / -seg-dir			The root neonatal-segmentation folder (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation)
+  -m / -mask			Brain mask (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation/segmentations/sub-${sID}_ses-${ssID}_desc-preproc_brain_mask.nii.gz)
   -a / -atlas	  		Atlas to use for DrawEM neonatal segmentation (default: ALBERT)    
   -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
   -h / -help / --help           Print usage.
@@ -29,7 +31,8 @@ ssID=$2
 shift; shift
 
 currdir=$PWD
-T2seg=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/segmentations/sub-${sID}_ses-${ssID}_desc-preproc_T2w_all_labels.nii.gz
+segdir=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation
+T2=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/T2/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
 mask=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/segmentations/sub-${sID}_ses-${ssID}_desc-preproc_brain_mask.nii.gz
 datadir=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation
 threads=10
@@ -41,7 +44,8 @@ currdir=$PWD
 
 while [ $# -gt 0 ]; do
     case "$1" in
-	-s|-seg-file) shift; T2seg=$1; ;;
+    	-t2 shift; T2=$1; ;;
+	-s|-seg-dir) shift; segdir=$1; ;;
 	-m|-mask) shift; mask=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-t|-threads)  shift; threads=$1; ;;
@@ -56,7 +60,8 @@ done
 echo "Neonatal segmentation using DrawEM
 Subject:       $sID 
 Session:       $ssID
-Segmentation:  $T2seg 
+Segm dir:      $segdir
+T2:	       $T2 
 Mask:	       $mask 
 Directory:     $datadir 
 Threads:       $threads
@@ -75,7 +80,7 @@ if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 #source ~/Software/DrawEM/parameters/path.se
 
 # Update T2seg to point to T2seg basename
-T2base=`basename $T2seg .nii.gz`
+T2base=`basename $T2 .nii.gz`
 
 ################################################################
 ## 1. Create 5TT image
@@ -96,7 +101,7 @@ if [ ! -f 5TT_$atlas/${T2base}_5TT.mif.gz ]; then
     # 2 - Converts cerebellum to subcortical-GM
     # NOTE - for all_labels_2_5TT_sgm_amyg_hipp.txt
     # 3 - Converts Amygdala and Hippocampi to subcortical-GM (change by using LUT all_labels_2_5TT.txt)
-    labelconvert segmentations/${T2base}.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT_$atlas/${T2base}_5TTtmp.mif
+    labelconvert segmentations/${T2base}_all_labels.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT_$atlas/${T2base}_5TTtmp.mif
     
     # Break up 5TTtmp in its individual components
     mrcalc 5TT_$atlas/${T2base}_5TTtmp.mif 1 -eq 5TT_$atlas/${T2base}_5TTtmp_01.mif #cGM
