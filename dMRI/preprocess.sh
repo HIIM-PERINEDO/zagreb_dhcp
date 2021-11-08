@@ -106,11 +106,7 @@ filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
 for file in $filelist; do
     filebase=`basename $file .nii.gz`;
     filedir=`dirname $file`
-    if [ ! -f $filedir/$filebase.bval ]; then
-	cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/orig/.
-    else
-	cp $file $filedir/$filebase.json $datadir/orig/.
-    fi
+    cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/orig/.
 done
 
 #Then update variables to only refer to filebase names (instead of path/file)
