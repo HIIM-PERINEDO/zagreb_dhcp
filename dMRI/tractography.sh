@@ -1,5 +1,5 @@
 #!/bin/bash
-# Zagreb Collab dhcp
+# Zagreb Collab dhcp - PMR
 #
 usage()
 {
@@ -28,12 +28,14 @@ command=$@
 sID=$1
 ssID=$2
 
-currdir=`pwd`
+currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-csd=derivatives/dMRI/sub-$sID/ses-$ssID/csd/csd_msmt_5tt_wm.mif.gz
-act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/act/5TT.mif.gz
+actdir=act_neonatal-5TT-M-CRIB
+csddir=csd_$actdir
+csd=derivatives/dMRI/sub-$sID/ses-$ssID/$csddir/csd_msmt_5tt_wm.mif.gz
+act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/$actdir/5TT_coreg.mif.gz
 nbr=10M
 threads=10
 
@@ -82,11 +84,11 @@ echo
 # 0. Copy to files to datadir (incl .json if present at original location)
 
 for file in $csd $act5tt; do
-    origdir=dirname $file
+    origdir=`dirname $file`
     filebase=`basename $file .mif.gz`
     
-    if [[ $file = $csd ]];then outdir=$datadir/csd;fi
-    if [[ $file = $act5tt ]];then outdir=$datadir/act;fi
+    if [[ $file = $csd ]];then outdir=$datadir/$csddir;fi
+    if [[ $file = $act5tt ]];then outdir=$datadir/$actdir;fi
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     
     if [ ! -f $outdir/$filebase.mif.gz ];then
@@ -109,8 +111,8 @@ cd $datadir
 if [ ! -d tractography ]; then mkdir tractography; fi
 
 # If a gmwmi mask does not exist, then create one
-if [ ! -f act/${act5tt}_gmwmi.mif.gz ];then
-    5tt2gmwmi act/$act5tt.mif.gz act/${act5tt}_gmwmi.mif.gz
+if [ ! -f $actdir/${act5tt}_gmwmi.mif.gz ];then
+    5tt2gmwmi $actdir/$act5tt.mif.gz $actdir/${act5tt}_gmwmi.mif.gz
 fi
 
 # Whole-brain tractography
@@ -120,7 +122,7 @@ cutofftext=`echo $cutoff | sed 's/\./p/g'`
 inittext=$cutofftext;
 # using above cutoff and init
 if [ ! -f tractography/whole_brain_${nbr}.tck ];then
-    tckgen -nthreads $threads -cutoff $cutoff -seed_cutoff $init -act act/$act5tt.mif.gz -backtrack -seed_gmwmi act/${act5tt}_gmwmi.mif.gz -crop_at_gmwmi -select $nbr csd/$csd.mif.gz tractography/whole_brain_${nbr}.tck
+    tckgen -nthreads $threads -cutoff $cutoff -seed_cutoff $init -act $actdir/$act5tt.mif.gz -backtrack -seed_gmwmi $actdir/${act5tt}_gmwmi.mif.gz -crop_at_gmwmi -select $nbr $csddir/$csd.mif.gz tractography/whole_brain_${nbr}.tck
 fi
 if [ ! -f tractography/whole_brain_${nbr}_edit100k.tck ];then
     tckedit tractography/whole_brain_${nbr}.tck -number 100k tractography/whole_brain_${nbr}_edit100k.tck
@@ -130,7 +132,7 @@ fi
 if [ ! -f tractography/whole_brain_${nbr}_sift.tck ]; then
     count=`tckinfo tractography/whole_brain_$nbr.tck | grep \ count: | awk '{print $2}'`;
     count0p10=`echo "$count / 10" | bc`;
-    tcksift -act act/$act5tt.mif.gz -term_number $count0p10 tractography/whole_brain_$nbr.tck csd/$csd.mif.gz tractography/whole_brain_${nbr}_sift.tck
+    tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 tractography/whole_brain_$nbr.tck $csddir/$csd.mif.gz tractography/whole_brain_${nbr}_sift.tck
 fi
 if [ ! -f tractography/whole_brain_${nbr}_sift_edit100k.tck ];then
     tckedit tractography/whole_brain_${nbr}_sift.tck -number 100k tractography/whole_brain_${nbr}_sift_edit100k.tck

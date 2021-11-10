@@ -53,7 +53,7 @@ done
 currdir=$PWD
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 #studyneo5ttdir=${segdir}_neonatal-5TT
-neo5ttdir=$datadir/5TT_neonatal-5TT;
+neo5ttdir=$datadir/5TT_neonatal-5TT-M-CRIB;
 
 echo "Neonatal-5TT
 Subject:	$sID 
@@ -96,7 +96,10 @@ if [ ! -d $neo5ttdir ]; then mkdir -p $neo5ttdir; fi
 
 # Relevant files to copy and create
 T2base=`basename $T2 .nii.gz`
-T2N4=${T2base}_N4; #adding _N4 to show that it is N4 biasfield corrected and comply with $atlasdir
+#T2N4=${T2base}_N4; #adding _N4 to show that it is N4 biasfield corrected and comply with $atlasdir
+# FL 2021-11-10: Changed to omit the existension _N4. Instead it is implied that we are working with N4 biasfield-corrected images.
+# one could consider using the BIDS desription wiht desc-restore instead
+T2N4=${T2base}; 
 brainmaskdrawem=brain_mask_drawem; #name compliant with $atlasdir
 
 # Copy T2w N4 file
@@ -119,11 +122,11 @@ fi
 cd  $neo5ttdir
 
 for i in $(seq -f %02g 1 10); do
-    if [ ! -f ${T2N4}_M-CRIB_P${i}_T2_hist.nii.gz ]; then
+    if [ ! -f ${T2N4}_P${i}_T2_hist.nii.gz ]; then
 	mrhistmatch -mask_input $atlasdir/M-CRIB_P${i}_T2_$brainmaskdrawem.nii.gz \
 		    -mask_target ${T2base}_$brainmaskdrawem.nii.gz \
 		    scale $atlasdir/M-CRIB_P${i}_T2_N4.nii.gz $T2N4.nii.gz \
-		    ${T2N4}_M-CRIB_P${i}_T2_hist.nii.gz
+		    ${T2N4}_P${i}_T2_hist.nii.gz
     fi
 done
 
@@ -133,25 +136,26 @@ cd $currdir
 ###################################################################################3
 ## Neonatal-5TT pipeline
 # 2. ANTs registration
-echo ANTs registration
 
 cd  $neo5ttdir
 
-if [ ! -f ${T2N4}_M-CRIB_Structural_Labels.nii.gz ];then
+if [ ! -f ${T2N4}_Structural_Labels.nii.gz ];then
+    echo ANTs registration
+    # FL 2021-11-10: Changed -x ${T2}_$brainmaskdrawem.nii.gz  to -x ${T2base}_$brainmaskdrawem.nii.gz in below
     antsJointLabelFusion.sh -d 3 -t $T2N4.nii.gz \
-			    -x ${T2}_$brainmaskdrawem.nii.gz \
-			    -o ${T2N4}_M-CRIB_Structural_ \
+			    -x ${T2base}_$brainmaskdrawem.nii.gz \
+			    -o ${T2N4}_Structural_ \
 			    -q 0 -c 2 -j $threads \
-			    -g ${T2N4}_M-CRIB_P01_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P01_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P02_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P02_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P03_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P03_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P04_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P04_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P05_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P05_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P06_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P06_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P07_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P07_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P08_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P08_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P09_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P09_parc_mrtrix.nii.gz \
-			    -g ${T2N4}_M-CRIB_P10_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P10_parc_mrtrix.nii.gz;
+			    -g ${T2N4}_P01_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P01_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P02_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P02_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P03_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P03_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P04_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P04_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P05_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P05_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P06_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P06_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P07_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P07_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P08_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P08_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P09_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P09_parc_mrtrix.nii.gz \
+			    -g ${T2N4}_P10_T2_hist.nii.gz -l $atlasdir/M-CRIB_orig_P10_parc_mrtrix.nii.gz;
 fi
 
 cd $currdir
@@ -268,12 +272,14 @@ if [ ! -f $neo5ttdir/${T2N4}-Pmap-subGM.nii.gz ]; then
 fi
 
 # extract the subcortical structures from the M-CRIB parcellation and combine them:
+
 cd $neo5ttdir
+
 if [ ! -f ${T2N4}_sub_all.nii.gz ]; then
-    fslmaths ${T2N4}_M-CRIB_Structural_Labels.nii.gz -thr 36 -uthr 39 -bin ${T2N4}_sub1.nii.gz
-    fslmaths ${T2N4}_M-CRIB_Structural_Labels.nii.gz -thr 43 -uthr 46 -bin ${T2N4}_sub2.nii.gz
-    fslmaths ${T2N4}_M-CRIB_Structural_Labels.nii.gz -thr 42 -uthr 42 -bin ${T2N4}_sub3.nii.gz
-    fslmaths ${T2N4}_M-CRIB_Structural_Labels.nii.gz -thr 49 -uthr 49 -bin ${T2N4}_sub4.nii.gz
+    fslmaths ${T2N4}_Structural_Labels.nii.gz -thr 36 -uthr 39 -bin ${T2N4}_sub1.nii.gz
+    fslmaths ${T2N4}_Structural_Labels.nii.gz -thr 43 -uthr 46 -bin ${T2N4}_sub2.nii.gz
+    fslmaths ${T2N4}_Structural_Labels.nii.gz -thr 42 -uthr 42 -bin ${T2N4}_sub3.nii.gz
+    fslmaths ${T2N4}_Structural_Labels.nii.gz -thr 49 -uthr 49 -bin ${T2N4}_sub4.nii.gz
     fslmaths ${T2N4}_sub1.nii.gz -add ${T2N4}_sub2.nii.gz -add ${T2N4}_sub3.nii.gz -add ${T2N4}_sub4.nii.gz ${T2N4}_sub_all.nii.gz
 fi
 
@@ -284,11 +290,13 @@ if [ ! -f ${T2N4}-Pmap-WM-corr.nii.gz ]; then
 fi
 
 # combine the subcortical GM tissue probability map with the structures derived from the M-CRIB parcellation and normalize all the maps between 0 and 1.
-fslmaths ${T2N4}-Pmap-GM.nii.gz -div 100 ${T2N4}-Pmap-0001.nii.gz
-fslmaths ${T2N4}-Pmap-subGM.nii.gz -div 100 ${T2N4}-Pmap-0002_pre.nii.gz
-fslmaths ${T2N4}-Pmap-0002_pre.nii.gz -add ${T2N4}_sub_all.nii.gz ${T2N4}-Pmap-0002.nii.gz
-fslmaths ${T2N4}-Pmap-WM-corr.nii.gz -div 100 ${T2N4}-Pmap-0003.nii.gz
-fslmaths ${T2N4}-Pmap-CSF.nii.gz -div 100 ${T2N4}-Pmap-0004.nii.gz
+if [ ! -f ${T2N4}-Pmap-0004.nii.gz ]; then
+    fslmaths ${T2N4}-Pmap-GM.nii.gz -div 100 ${T2N4}-Pmap-0001.nii.gz
+    fslmaths ${T2N4}-Pmap-subGM.nii.gz -div 100 ${T2N4}-Pmap-0002_pre.nii.gz
+    fslmaths ${T2N4}-Pmap-0002_pre.nii.gz -add ${T2N4}_sub_all.nii.gz ${T2N4}-Pmap-0002.nii.gz
+    fslmaths ${T2N4}-Pmap-WM-corr.nii.gz -div 100 ${T2N4}-Pmap-0003.nii.gz
+    fslmaths ${T2N4}-Pmap-CSF.nii.gz -div 100 ${T2N4}-Pmap-0004.nii.gz
+fi
 
 # ensure that the sum of all the tissue probability maps in all the voxels is equal to 1, we run the following command:
 # NOTE - this command uses the function niftiRead and niftiWrite, which can be found in the vistasoft repository. So add it to the path
@@ -297,16 +305,16 @@ if [ ! -f ${T2N4}-normalized-Pmap-0004.nii.gz ]; then
 fi
 
 # finally, merge the files (adding a blanc tissue type at the end for the case of healthy brains) and remove all the NaN values.
-if [ ! -f ${T2N4}-5TT.nii.gz ];then
+if [ ! -f ${T2N4}_5TT.nii.gz ];then
     fslmaths ${T2N4}.nii.gz -mul 0 ${T2N4}-normalized-Pmap-0005.nii.gz
-    fslmerge -t ${T2N4}-5TTnan.nii.gz ${T2N4}-normalized-Pmap-0001.nii.gz ${T2N4}-normalized-Pmap-0002.nii.gz ${T2N4}-normalized-Pmap-0003.nii.gz ${T2N4}-normalized-Pmap-0004.nii.gz ${T2N4}-normalized-Pmap-0005.nii.gz
-    fslmaths ${T2N4}-5TTnan.nii.gz -nan ${T2N4}-5TT.nii.gz
+    fslmerge -t ${T2N4}_5TTnan.nii.gz ${T2N4}-normalized-Pmap-0001.nii.gz ${T2N4}-normalized-Pmap-0002.nii.gz ${T2N4}-normalized-Pmap-0003.nii.gz ${T2N4}-normalized-Pmap-0004.nii.gz ${T2N4}-normalized-Pmap-0005.nii.gz
+    fslmaths ${T2N4}_5TTnan.nii.gz -nan ${T2N4}_5TT.nii.gz
 fi
 
 # Create some 5TT maps for visualization
-if [ ! -f ${T2N4}-5TTvis.nii.gz ];then
-    5ttvis ${T2N4}-5TT.gz ${T2N4}-5TTvis.nii.gz;
-    5tt2gmwmi ${T2N4}-5TT.gz ${T2N4}-5TTgmwmi.nii.gz;
+if [ ! -f ${T2N4}_5TTvis.nii.gz ];then
+    5tt2vis ${T2N4}_5TT.nii.gz ${T2N4}_5TTvis.nii.gz;
+    5tt2gmwmi ${T2N4}_5TT.nii.gz ${T2N4}_5TTgmwmi.nii.gz;
 fi
 
 cd $currdir

@@ -85,7 +85,7 @@ T2base=`basename $T2 .nii.gz`
 ################################################################
 ## 1. Create 5TT image
 
-if [ ! -d $datadir/5TT_DrawEM_$atlas ];then mkdir -p $datadir/5TT_DrawEM_$atlas; fi
+if [ ! -d $datadir/5TT_DrawEM-$atlas ];then mkdir -p $datadir/5TT_DrawEM-$atlas; fi
 
 cd $datadir
 
@@ -95,29 +95,29 @@ cd $datadir
 # Path to LUTs for conversion
 LUTdir=$codedir/../label_names/$atlas
 
-if [ ! -f 5TT_DrawEM_$atlas/${T2base}_5TT.mif.gz ]; then
+if [ ! -f 5TT_DrawEM-$atlas/${T2base}_5TT.nii.gz ]; then
     # NOTE - for both all_labels_2_5TT.txt and all_labels_2_5TT_sgm_amyg_hipp.txt
     # 1 - Converts Intra-cranial-background to WM - This converts dWM properly (in tissue_labels => sGM) but there can be some extra-cerebral tissue that becomes included in WM! Check results!!
     # 2 - Converts cerebellum to subcortical-GM
     # NOTE - for all_labels_2_5TT_sgm_amyg_hipp.txt
     # 3 - Converts Amygdala and Hippocampi to subcortical-GM (change by using LUT all_labels_2_5TT.txt)
-    labelconvert segmentations/${T2base}_all_labels.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT_DrawEM_$atlas/${T2base}_5TTtmp.mif
+    labelconvert segmentations/${T2base}_all_labels.nii.gz $LUTdir/all_labels.txt $LUTdir/all_labels_2_5TT_sgm_amyg_hipp.txt 5TT_DrawEM-$atlas/${T2base}_5TTtmp.mif
     
     # Break up 5TTtmp in its individual components
-    mrcalc 5TT_DrawEM_$atlas/${T2base}_5TTtmp.mif 1 -eq 5TT_DrawEM_$atlas/${T2base}_5TTtmp_01.mif #cGM
-    mrcalc 5TT_DrawEM_$atlas/${T2base}_5TTtmp.mif 2 -eq 5TT_DrawEM_$atlas/${T2base}_5TTtmp_02.mif #sGM
-    mrcalc 5TT_DrawEM_$atlas/${T2base}_5TTtmp.mif 3 -eq 5TT_DrawEM_$atlas/${T2base}_5TTtmp_03.mif #WM
-    mrcalc 5TT_DrawEM_$atlas/${T2base}_5TTtmp.mif 4 -eq 5TT_DrawEM_$atlas/${T2base}_5TTtmp_04.mif #CSF
-    mrcalc T2/$T2base.nii.gz 0 -mul 5TT_DrawEM_$atlas/${T2base}_5TTtmp_05.mif #pathological tissue - create image with 0:s
+    mrcalc 5TT_DrawEM-$atlas/${T2base}_5TTtmp.mif 1 -eq 5TT_DrawEM-$atlas/${T2base}_5TTtmp_01.mif #cGM
+    mrcalc 5TT_DrawEM-$atlas/${T2base}_5TTtmp.mif 2 -eq 5TT_DrawEM-$atlas/${T2base}_5TTtmp_02.mif #sGM
+    mrcalc 5TT_DrawEM-$atlas/${T2base}_5TTtmp.mif 3 -eq 5TT_DrawEM-$atlas/${T2base}_5TTtmp_03.mif #WM
+    mrcalc 5TT_DrawEM-$atlas/${T2base}_5TTtmp.mif 4 -eq 5TT_DrawEM-$atlas/${T2base}_5TTtmp_04.mif #CSF
+    mrcalc T2/$T2base.nii.gz 0 -mul 5TT_DrawEM-$atlas/${T2base}_5TTtmp_05.mif #pathological tissue - create image with 0:s
     # and put together in 4D 5TT-file
-    mrcat -axis 3  5TT_DrawEM_$atlas/${T2base}_5TTtmp_0*.mif 5TT_DrawEM_$atlas/${T2base}_5TT.mif.gz
+    mrcat -axis 3  5TT_DrawEM-$atlas/${T2base}_5TTtmp_0*.mif 5TT_DrawEM-$atlas/${T2base}_5TT.nii.gz
     # remove tmp-files
-    rm 5TT_DrawEM_$atlas/*tmp*
+    rm 5TT_DrawEM-$atlas/*tmp*
     
     # Create some 5TT maps for visualization
-    if [ ! -f 5TT_DrawEM_$atlas/${T2base}_5TTvis.mif.gz ];then
-	5tt2vis 5TT_DrawEM_$atlas/${T2base}_5TT.mif.gz 5TT_DrawEM_$atlas/${T2base}_5TTvis.mif.gz;
-	5tt2gmwmi 5TT_DrawEM_$atlas/${T2base}_5TT.mif.gz 5TT_DrawEM_$atlas/${T2base}_5TTgmwmi.mif.gz;
+    if [ ! -f 5TT_DrawEM-$atlas/${T2base}_5TTvis.nii.gz ];then
+	5tt2vis 5TT_DrawEM-$atlas/${T2base}_5TT.nii.gz 5TT_DrawEM-$atlas/${T2base}_5TTvis.nii.gz;
+	5tt2gmwmi 5TT_DrawEM-$atlas/${T2base}_5TT.nii.gz 5TT_DrawEM-$atlas/${T2base}_5TTgmwmi.nii.gz;
     fi
 fi
 

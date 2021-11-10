@@ -264,15 +264,18 @@ if [ ! -f ${dwi}_norm.mif.gz ];then
     dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_norm.mif.gz
 fi
 
-# Extract mean B0
-if [ ! -f meanb0.nii.gz ]; then
-    dwiextract -bzero ${dwi}_norm.mif.gz - |  mrmath -force -axis 3 - mean meanb0.mif.gz
-    mrcalc meanb0.mif.gz mask.mif.gz -mul meanb0_brain.mif.gz
-    mrconvert meanb0.mif.gz meanb0.nii.gz
-    mrconvert meanb0_brain.mif.gz meanb0_brain.nii.gz
-    echo "Visually check the meanb0_brain"
-    mrview meanb0_brain.nii.gz -mode 2
-fi
+# Extract mean b0, b1000 and b2600
+for bvalue in 0 1000 2600; do
+    bfile=meanb$bvalue
+    if [ ! -f $bfile.nii.gz ]; then
+	dwiextract -shells $bvalue ${dwi}_norm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
+	mrcalc $bfile.mif.gz mask.mif.gz -mul ${bfile}_brain.mif.gz
+	mrconvert $bfile.mif.gz $bfile.nii.gz
+	mrconvert ${bfile}_brain.mif.gz ${bfile}_brain.nii.gz
+	echo "Visually check the ${bfile}_brain"
+	#mrview ${bfile}_brain.nii.gz -mode 2
+    fi
+done
 
 # Calculate diffusion tensor and tensor metrics
 

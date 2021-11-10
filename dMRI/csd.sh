@@ -8,13 +8,14 @@ usage()
 Estimation of CSD
 
 Arguments:
-  sID				Subject ID (e.g. PMRABC) 
+  sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
   -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi_preproc_norm.mif.gz)
   -mask				Mask for dMRI data (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/mask.mif.gz)
   -response			Response function (tournier or msmt_5tt) (default: msmt_5tt)
-  -5TT				5TT in dMRI space (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/act/5TT.mif.gz)
+  -5TT				5TT in dMRI space (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/act_DrawEM-ALBERT/5TT_coreg.mif.gz)
+  -actdir			ACT subfolder in data dir (se below) to hold 5TT files (default: act_DrawEM-ALBERT)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
@@ -28,13 +29,14 @@ command=$@
 sID=$1
 ssID=$2
 
-currdir=`pwd`
+currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 dwi=derivatives/dMRI/sub-$sID/ses-$ssID/dwi_preproc_norm.mif.gz
 mask=derivatives/dMRI/sub-$sID/ses-$ssID/mask.mif.gz
-act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/act/5TT.mif.gz
+actdir=act_DrawEM-ALBERT
+act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/$actdir/5TT_coreg.mif.gz
 response=msmt_5tt
 
 # check whether the different tools are set and load parameters
@@ -46,6 +48,7 @@ while [ $# -gt 0 ]; do
 	-dwi) shift; dwi=$1; ;;
 	-mask) shift; mask=$1; ;;
 	-5TT) shift; act5tt=$1; ;;
+	-actdir) shift; actdir=$1; ;;
 	-response) shift; response=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
@@ -55,6 +58,8 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+csddir=csd_$actdir
+
 echo "CSD estimation of dMRI using 5TT
 Subject:       $sID 
 Session:       $ssID
@@ -62,6 +67,7 @@ DWI:	       $dwi
 Mask:	       $mask
 Response:      $response
 5TT:           $act5tt
+ACTdir:	       $actdir
 Directory:     $datadir 
 $BASH_SOURCE   $command
 ----------------------------"
@@ -83,13 +89,15 @@ echo
 # 0. Copy to files to datadir (incl .json if present at original location)
 
 for file in $dwi $act5tt $mask; do
-    origdir=dirname $file
+    origdir=`dirname $file`
     filebase=`basename $file .mif.gz`
     if [[ $file = $act5tt ]];then
-	outdir=$datadir/act
+	outdir=$datadir/$actdir
     else
 	outdir=$datadir
     fi
+
+    if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     
     if [ ! -f $ourdir/$filebase.mif.gz ];then
 	cp $file $outdir/.
@@ -110,24 +118,24 @@ mask=`basename $mask .mif.gz`
 
 cd $datadir
 
-if [ ! -d csd ];then mkdir -p csd;fi
+if [ ! -d $csddir ];then mkdir -p $csddir;fi
 
 # ---- Tournier ----
 if [[ $response = tournier ]]; then
     # response fcn
-    if [ ! -f csd/${response}_response.txt ]; then
+    if [ ! -f $csddir/${response}_response.txt ]; then
 	echo "Estimating response function use $response method"
-	dwi2response tournier -force -mask  $mask.mif.gz -voxels csd/${response}_sf.mif $dwi.mif.gz csd/${response}_response.txt
+	dwi2response tournier -force -mask  $mask.mif.gz -voxels $csddir/${response}_sf.mif $dwi.mif.gz $csddir/${response}_response.txt
 	echo Check results: response fcn and sf voxels
-	shview  csd/${response}_response.txt
-	mrview  meanb0_brain.nii.gz -roi.load csd/${response}_sf.mif -roi.opacity 0.5 -mode 2
+	shview  $csddir/${response}_response.txt
+	mrview  meanb0_brain.nii.gz -roi.load $csddir/${response}_sf.mif -roi.opacity 0.5 -mode 2
     fi
     # Do CSD estimation
-    if [ ! -f csd/CSD_${response}.mif.gz ]; then
+    if [ ! -f $csddir/CSD_${response}.mif.gz ]; then
 	echo "Estimating ODFs with CSD"
-	dwi2fod -force -mask $mask.mif.gz csd $dwi.mif.gz csd/${response}_response.txt csd/csd_${response}.mif.gz
+	dwi2fod -force -mask $mask.mif.gz csd $dwi.mif.gz $csddir/${response}_response.txt $csddir/csd_${response}.mif.gz
 	echo Check results of ODFs
-	mrview -load meanb0_brain.nii.gz -odf.load_sh csd/csd_${response}.mif.gz -mode 2
+	mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}.mif.gz -mode 2
     fi
 fi
 
@@ -135,16 +143,16 @@ fi
 if [[ $response = msmt_5tt ]]; then
     # Estimate msmt_csd response functions (note use FA < 0.15 for gm and csf)
     echo "Estimating response function use $response method"
-    dwi2response msmt_5tt -force -voxels csd/${response}_sf.mif -fa 0.15 $dwi.mif.gz act/$act5tt.mif.gz csd/${response}_wm.txt csd/${response}_gm.txt csd/${response}_csf.txt
+    dwi2response msmt_5tt -force -voxels $csddir/${response}_sf.mif -fa 0.15 $dwi.mif.gz $actdir/$act5tt.mif.gz $csddir/${response}_wm.txt $csddir/${response}_gm.txt $csddir/${response}_csf.txt
     echo "Check results for response fcns (wm, gm and csf) and single-fibre voxels (sf)"
-    shview  csd/${response}_wm.txt
-    shview  csd/${response}_gm.txt
-    shview  csd/${response}_csf.txt
-    mrview  meanb0_brain.nii.gz -overlay.load csd/${response}_sf.mif -overlay.opacity 0.5 -mode 2
+    shview  $csddir/${response}_wm.txt
+    shview  $csddir/${response}_gm.txt
+    shview  $csddir/${response}_csf.txt
+    mrview  meanb0_brain.nii.gz -overlay.load $csddir/${response}_sf.mif -overlay.opacity 0.5 -mode 2
     # Calculate ODFs
     echo "Calculating CSD using ACT and $response"
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz csd/${response}_wm.txt csd/csd_${response}_wm.mif.gz csd/${response}_gm.txt csd/csd_${response}_gm.mif.gz csd/${response}_csf.txt csd/csd_${response}_csf.mif.gz
-    mrview -load meanb0_brain.nii.gz -odf.load_sh csd/csd_${response}_wm.mif.gz -mode 2;
+    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm.mif.gz $csddir/${response}_gm.txt $csddir/csd_${response}_gm.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf.mif.gz
+    mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}_wm.mif.gz -mode 2;
 fi
 
 
