@@ -16,7 +16,7 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
 
 Options:
-  -meanb0			Undistorted brain extracted dMRI mean b1000 image  (default: derivatives/dMRI/sub-sID/ses-ssID/meanb1000_brain.nii.gz)
+  -meanb1000			Undistorted brain extracted dMRI mean b1000 image  (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/meanb1000_brain.nii.gz)
 
   -T2				T2 that has been segmented and will be registered to, should be N4-corrected and brain extracted (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation/N4/sub-sID_ses-ssID_desc-preproc_T2w.nii.gz)
 
@@ -27,8 +27,8 @@ Options:
 				(default neonatal-5TT: M-CRIB)
 
   -5TT				5TT image of T2, to use for BBR reg and to be transformed into dMRI space 
-  				(default DrawEM: derivatives/dMRI/sub-sID/ses-ssID/5TT_$method-$atlas/sub-sID_ses-ssID_desc-preproc_T2w_5TT.nii.gz) 
-				(default M-CRIB: derivatives/dMRI/sub-sID/ses-ssID/5TT_$method-$atlas/sub-sID_ses-ssID_desc-preproc_T2w_5TT.nii.gz)
+  				(default DrawEM: derivatives/sMRI/sub-sID/ses-ssID/5TT_\$method-\$atlas/sub-sID_ses-ssID_desc-preproc_T2w_5TT.nii.gz) 
+				(default M-CRIB: derivatives/sMRI/sub-sID/ses-ssID/5TT_\$method-\$atlas/sub-sID_ses-ssID_desc-preproc_T2w_5TT.nii.gz)
 
   -label			Label file from segmentation, to be transformed into dMRI space 
   				(default DrawEM: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation/segmentations/sub-sID_ses-ssID_desc-preproc_T2w_all_labels.nii.gz)
@@ -57,7 +57,7 @@ shift; shift
 currdir=$PWD
 
 # START Defaults
-meanb0=derivatives/dMRI/sub-$sID/ses-$ssID/meanb1000.nii.gz
+meanb1000=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/meanb1000.nii.gz
 T2=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/N4/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 method=DrawEM
@@ -91,7 +91,7 @@ act5tt=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation/5TT_${method}-$
 while [ $# -gt 0 ]; do
     case "$1" in
 	-T2) shift; T2=$1; ;;
-	-meanb0) shift; meanb0=$1; ;;
+	-meanb1000) shift; meanb1000=$1; ;;
 	-label) shift; allLabel=$1; ;;
 	-label_LUT) shift; allLabelLUT=$1; ;;
 	-5TT) shift; act5tt=$1; ;;
@@ -106,7 +106,7 @@ done
 echo "Registration of dMRI and sMRI and transformation into dMRI-space
 Subject:       	   $sID 
 Session:       	   $ssID
-meanb0:	       	   $meanb0
+meanb1000:	       	   $meanb1000
 Atlas:	       	   $atlas     
 T2:		   $T2
 5TT:           	   $act5tt
@@ -131,14 +131,14 @@ echo
 # 0. Copy to files to relevant location in $datadir (incl .json if present at original location)
 
 # Files to go into different locations in $datadir 
-for file in $meanb0 $T2 $act5tt $allLabel; do
+for file in $meanb1000 $T2 $act5tt $allLabel; do
     origdir=`dirname $file`
     filebase=`basename $file .nii.gz`
     
-    if [[ $file = $meanb0 ]]; then outdir=$datadir;fi
-    if [[ $file = $T2 ]]; then outdir=$datadir/registration;fi
-    if [[ $file = $act5tt ]]; then actdir=act_${method}-$atlas; outdir=$datadir/$actdir;fi
-    if [[ $file = $allLabel ]]; then outdir=$datadir/parcellation/${method}-$atlas/segmentations;fi
+    if [[ $file = $meanb1000 ]]; then outdir=$datadir/dwi;fi
+    if [[ $file = $T2 ]]; then outdir=$datadir/anat;fi
+    if [[ $file = $act5tt ]]; then actdir=act/${method}-$atlas; outdir=$datadir/dwi/$actdir;fi
+    if [[ $file = $allLabel ]]; then outdir=$datadir/dwi/parcellation/${method}-$atlas/segmentations;fi
 
     if [ ! -d $outdir ];then mkdir -p $outdir;fi
 			     
@@ -151,7 +151,7 @@ for file in $meanb0 $T2 $act5tt $allLabel; do
 done
 
 # LUT to copy
-LUTdir=parcellation/$method-$atlas/label_names
+LUTdir=dwi/parcellation/$method-$atlas/label_names
 if [ ! -d $datadir/$LUTdir ]; then mkdir -p $datadir/$LUTdir ]; fi
 for file in $allLabelLUT; do
     filebase=`basename $file`
@@ -162,7 +162,7 @@ done
 
 # Update variables to point at corresponding filebases in $datadir
 T2=`basename $T2 .nii.gz`
-meanb0=`basename $meanb0 .nii.gz`
+meanb1000=`basename $meanb1000 .nii.gz`
 act5tt=`basename $act5tt .nii.gz`
 allLabel=`basename $allLabel .nii.gz`
 allLabelLUT=`basename $allLabelLUT .txt`
@@ -173,76 +173,66 @@ allLabelLUT=`basename $allLabelLUT .txt`
 
 cd $datadir
 
-# Do registrations
-cd registration
+# Do registrations in subfolder xfm
 
-if [ ! -d reg ]; then mkdir reg; fi
+if [ ! -d xfm ]; then mkdir xfm; fi
 
-# Do brain extractions of meanb0 and T2 before linear registration
-if [ ! -f ${meanb0}_brain.nii.gz ];then
-    bet ../$meanb0.nii.gz ${meanb0}_brain.nii.gz -F -R
+# Do brain extractions of meanb1000 and T2 before linear registration
+if [ ! -f dwi/${meanb1000}_brain.nii.gz ];then
+    bet dwi/$meanb1000.nii.gz dwi/${meanb1000}_brain.nii.gz -F -R
 fi
 # NOTE - desc-preproc is brain extracted, make this mock so that it is clear that a _brain file goes in to FLIRT below
-if [ ! -f ${T2}_brain.nii.gz ];then
-    cp $T2.nii.gz ${T2}_brain.nii.gz
+if [ ! -f anat/${T2}_brain.nii.gz ];then
+    cp anat/$T2.nii.gz anat/${T2}_brain.nii.gz
 fi
      
-## Registration
-#if [ ! -f reg/${meanb0}_2_${T2}_flirt-dof6.mat ];then 
-#    echo "Rigid-body linear registration using FSL's FLIRT"
-#    flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -omat reg/${meanb0}_2_${T2}_flirt-dof6.mat
-#fi
-
 # Registration using BBR
-if [ ! -f reg/${meanb0}_2_${T2}_flirt-bbr.mat ];then 
-    echo "Rigid-body linear registration using FSL's FLIRT"
+if [ ! -f xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat ];then 
+    echo "Rigid-body linear registration using FSL's FLIRT with BBR"
     
     # First, make sure that we have a WM seg in $actdir
     wmseg=${T2}_5TTwm;
-    if [ ! -f ../$actdir/$wmseg.nii.gz ]; then
+    if [ ! -f dwi/$actdir/$wmseg.nii.gz ]; then
 	# Extract WM from 5TT image and save as 3D image
-	mrconvert -coord 3 2 -axes 0,1,2 ../$actdir/${T2}_5TT.nii.gz ../$actdir/$wmseg.nii.gz 
+	mrconvert -coord 3 2 -axes 0,1,2 dwi/$actdir/${T2}_5TT.nii.gz dwi/$actdir/$wmseg.nii.gz 
     fi
 
     # Second, perform 2-step registration
-    flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -omat reg/tmp.mat
-    flirt -in ${meanb0}_brain.nii.gz -ref ${T2}_brain.nii.gz -dof 6 -cost bbr -wmseg ../$actdir/$wmseg.nii.gz -init reg/tmp.mat -omat reg/${meanb0}_2_${T2}_flirt-bbr.mat -schedule $FSLDIR/etc/flirtsch/bbr.sch
-    rm reg/tmp.mat
+    flirt -in dwi/${meanb1000}_brain.nii.gz -ref anat/${T2}_brain.nii.gz -dof 6 -omat xfm/tmp.mat
+    flirt -in dwi/${meanb1000}_brain.nii.gz -ref anat/${T2}_brain.nii.gz -dof 6 -cost bbr -wmseg dwi/$actdir/$wmseg.nii.gz -init xfm/tmp.mat -omat xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat -schedule $FSLDIR/etc/flirtsch/bbr.sch
+    rm xfm/tmp.mat
 fi
 
 # Transform FLIRT registration matrix into MRtrix format
-if [ ! -f reg/${meanb0}_2_${T2}_mrtrix-bbr.mat ];then
-     transformconvert reg/${meanb0}_2_${T2}_flirt-bbr.mat ${meanb0}_brain.nii.gz $T2.nii.gz flirt_import reg/${meanb0}_2_${T2}_mrtrix-bbr.mat
+if [ ! -f xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat ];then
+     transformconvert xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_flirt-bbr.mat dwi/${meanb1000}_brain.nii.gz anat/$T2.nii.gz flirt_import xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat
 fi
      
 
 cd $currdir
 
 ####################################################################################################
-## Transformations of T2, 5TT, allLabels-file into dMRI space by updating image headers (no resampling!)
+## 2. Transformations of T2, 5TT, allLabels-file into dMRI space by updating image headers (no resampling!)
 
 cd $datadir
 
 # T2
-if [ ! -f registration/${T2}_space-dwi.nii.gz ]; then
-    mrtransform registration/$T2.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-bbr.mat registration/${T2}_space-dwi.nii.gz -inverse
-    mrconvert registration/${T2}_space-dwi.nii.gz T2w_coreg.mif.gz
+if [ ! -f anat/${T2}_space-dwi.nii.gz ]; then
+    mrtransform anat/$T2.nii.gz -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat anat/${T2}_space-dwi.nii.gz -inverse
+    mrconvert anat/${T2}_space-dwi.nii.gz dwi/T2w_coreg.mif.gz
 fi
 
 # Take care of 5TT
-if [ ! -f  $actdir/${act5tt}_space-dwi.nii.gz ]; then
-    mrtransform $actdir/$act5tt.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-bbr.mat $actdir/${act5tt}_space-dwi.nii.gz -inverse
-    mrconvert $actdir/${act5tt}_space-dwi.nii.gz $actdir/5TT_coreg.mif.gz
+if [ ! -f  dwi/$actdir/${act5tt}_space-dwi.nii.gz ]; then
+    mrtransform dwi/$actdir/$act5tt.nii.gz -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat dwi/$actdir/${act5tt}_space-dwi.nii.gz -inverse
+    mrconvert dwi/$actdir/${act5tt}_space-dwi.nii.gz dwi/$actdir/5TT_coreg.mif.gz
 fi
 
 # Take care of all_labels
-labeldir=parcellation/$method-$atlas/segmentations
+labeldir=dwi/parcellation/$method-$atlas/segmentations
 if [ ! -f $labeldir/${allLabel}_space-dwi.nii.gz ]; then
-    mrtransform $labeldir/$allLabel.nii.gz -linear registration/reg/${meanb0}_2_${T2}_mrtrix-bbr.mat $labeldir/${allLabel}_space-dwi.nii.gz -inverse
+    mrtransform $labeldir/$allLabel.nii.gz -linear xfm/sub-${sID}_ses-${ssID}_from-dwi_to-T2w_mrtrix-bbr.mat $labeldir/${allLabel}_space-dwi.nii.gz -inverse
     mrconvert $labeldir/${allLabel}_space-dwi.nii.gz $labeldir/${allLabelLUT}_coreg.mif.gz
 fi
-
-# Create some visualisationclean-up
-#rm *tmp* reg/*tmp*
 
 cd $currdir

@@ -32,10 +32,16 @@ currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
+
+method=neonatal-5TT
+atlas=M-CRIB
 actdir=act_neonatal-5TT-M-CRIB
-csddir=csd_$actdir
+csddir=csd/$actdir
+tractdir=tractography/$actdir
+
 csd=derivatives/dMRI/sub-$sID/ses-$ssID/$csddir/csd_msmt_5tt_wm.mif.gz
 act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/$actdir/5TT_coreg.mif.gz
+
 nbr=10M
 threads=10
 
@@ -108,7 +114,7 @@ act5tt=`basename $act5tt .mif.gz`
 
 cd $datadir
 
-if [ ! -d tractography ]; then mkdir tractography; fi
+if [ ! -d $tractdir ]; then mkdir -p $tractdir; fi
 
 # If a gmwmi mask does not exist, then create one
 if [ ! -f $actdir/${act5tt}_gmwmi.mif.gz ];then
@@ -116,26 +122,26 @@ if [ ! -f $actdir/${act5tt}_gmwmi.mif.gz ];then
 fi
 
 # Whole-brain tractography
-cutoff=0.05; # default is 0.1
+cutoff=0.05; # This is the value that is used in Blesa et al, Cerebral Cortex 2021. Default is 0.1
 init=$cutoff; # default is equal to cutoff
 cutofftext=`echo $cutoff | sed 's/\./p/g'`
 inittext=$cutofftext;
 # using above cutoff and init
-if [ ! -f tractography/whole_brain_${nbr}.tck ];then
-    tckgen -nthreads $threads -cutoff $cutoff -seed_cutoff $init -act $actdir/$act5tt.mif.gz -backtrack -seed_gmwmi $actdir/${act5tt}_gmwmi.mif.gz -crop_at_gmwmi -select $nbr $csddir/$csd.mif.gz tractography/whole_brain_${nbr}.tck
+if [ ! -f $tractdir/whole_brain_${nbr}.tck ];then
+    tckgen -nthreads $threads -cutoff $cutoff -seed_cutoff $init -act $actdir/$act5tt.mif.gz -backtrack -seed_gmwmi $actdir/${act5tt}_gmwmi.mif.gz -crop_at_gmwmi -select $nbr $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}.tck
 fi
-if [ ! -f tractography/whole_brain_${nbr}_edit100k.tck ];then
-    tckedit tractography/whole_brain_${nbr}.tck -number 100k tractography/whole_brain_${nbr}_edit100k.tck
+if [ ! -f $tractdir/whole_brain_${nbr}_edit100k.tck ];then
+    tckedit $tractdir/whole_brain_${nbr}.tck -number 100k $tractdir/whole_brain_${nbr}_edit100k.tck
 fi
 
 # SIFT-filtering of whole-brain tractogram
-if [ ! -f tractography/whole_brain_${nbr}_sift.tck ]; then
-    count=`tckinfo tractography/whole_brain_$nbr.tck | grep \ count: | awk '{print $2}'`;
+if [ ! -f $tractdir/whole_brain_${nbr}_sift.tck ]; then
+    count=`tckinfo $tractdir/whole_brain_$nbr.tck | grep \ count: | awk '{print $2}'`;
     count0p10=`echo "$count / 10" | bc`;
-    tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 tractography/whole_brain_$nbr.tck $csddir/$csd.mif.gz tractography/whole_brain_${nbr}_sift.tck
+    tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift.tck
 fi
-if [ ! -f tractography/whole_brain_${nbr}_sift_edit100k.tck ];then
-    tckedit tractography/whole_brain_${nbr}_sift.tck -number 100k tractography/whole_brain_${nbr}_sift_edit100k.tck
+if [ ! -f $tractdir/whole_brain_${nbr}_sift_edit100k.tck ];then
+    tckedit $tractdir/whole_brain_${nbr}_sift.tck -number 100k $tractdir/whole_brain_${nbr}_sift_edit100k.tck
 fi
 
 cd $currdir
