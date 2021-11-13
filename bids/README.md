@@ -62,3 +62,31 @@ s32_ep2d_diff_4scan_trace_p2_TRACEW
 s33_ep2d_diff_4scan_trace_p2_ADC
 
 ## BIDS conversion and BIDS data organisation
+All sequences will have running number (run-0X) to handle re-runs or multiple runs.
+NOTE - dir-PA_dwi will be put in `/fmap` but dir-PA_SBRef will not and instead into `/dwi`
+
+### Anatomy goes in `/anat`
+t1_mprage_sag_iso		->	anat/sub-PMR001_ses-MR2_acq-MPRAGE_run-1_T1w.nii.gz
+t2_space_sag_iso_edinburgh	->	anat/sub-PMR001_ses-MR2_acq-SPC_run-1_T2w.nii.gz
+t2_qtse_cor			->	anat/sub-PMR001_ses-MR2_acq-cor_run-1_T2w.nii.gz
+t2_tse_tra_1mm_MCRIB_p2		->	anat/sub-PMR001_ses-MR2_acq-MCRIB_run-1_T2w.nii.gz
+t2_space_dark-fluid_sag_iso	->	anat/sub-PMR001_ses-MR2_run-1_FLAIR.nii.gz
+
+### Fieldmaps goes in `/fmap`
+SpinEchoFieldMap_AP		->	fmap/sub-PMR001_ses-MR2_acq-se_dir-AP_run-1_epi.nii.gz
+SpinEchoFieldMap_PA		->	fmap/sub-PMR001_ses-MR2_acq-se_dir-PA_run-1_epi.nii.gz
+dMRI_dir106_PA_2x2x2 (1st run)	->	fmap/sub-PMR001_ses-MR2_acq-dwi_dir-PA_run-1_epi.nii.gz
+dMRI_dir106_PA_2x2x2 (2nd run)	->	fmap/sub-PMR001_ses-MR2_acq-dwi_dir-PA_run-2_epi.nii.gz
+
+### Functionals (rs-fMRI) goes into `/func`
+rfMRI_REST_PA_SBRef		->	func/sub-PMR001_ses-MR2_task-rest_dir-PA_run-1_sbref.nii.gz
+rfMRI_REST_PA			->	func/sub-PMR001_ses-MR2_task-rest_dir-PA_run-1_bold.nii.gz
+rfMRI_REST_AP_SBRef		->	func/sub-PMR001_ses-MR2_task-rest_dir-AP_run-1_sbref.nii.gz
+rfMRI_REST_AP			->	func/sub-PMR001_ses-MR2_task-rest_dir-AP_run-1_bold.nii.gz
+
+### Diffusion goes into `/dwi`
+dMRI_dir106_PA_2x2x2_SBRef(1st)	->	dwi/sub-PMR001_ses-MR2_dir-PA_run-1_sbref.nii.gz
+dMRI_dir106_AP_2x2x2_SBRef	->	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_sbref.nii.gz
+dMRI_dir106_AP_2x2x2		->	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_dwi.nii.gz
+dMRI_dir106_PA_2x2x2_SBRef(2nd)	->	dwi/sub-PMR001_ses-MR2_dir-PA_run-2_sbref.nii.gz
+
