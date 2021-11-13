@@ -63,6 +63,7 @@ s33_ep2d_diff_4scan_trace_p2_ADC
 
 ## BIDS conversion and BIDS data organisation
 All sequences will have running number (run-0X) to handle re-runs or multiple runs.
+
 NOTE - dir-PA_dwi will be put in `/fmap` but dir-PA_SBRef will not and instead into `/dwi`
 
 ### Anatomy goes in `/anat`
