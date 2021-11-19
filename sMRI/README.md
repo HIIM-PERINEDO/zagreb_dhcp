@@ -4,15 +4,14 @@ This folder harbours scripts for processing sMRI files
 
 ## 1. Preprocessing
 Run script `preprocess.sh`
-
-- Upsamples inplane 2D anatomicals (tra T2w and cor T2w)
-- Registers anatomicals (FLAIR, cor highres T2w and tra highres T2w) to 3D-T2w
-- Transforms FLAIR into T2w-space (3D-T2w) and creates adapted brain mask from transformed FLAIR
+- do motion-correction (not yet implemented)
+- make high-resolution versions of T2w MCRIB
+- create relevant brain masks for neonatal-segmentation
 
 ## 2. Neonatal segmentation
-Run script neonatal-segmentation.sh (for MIRTK DrawEM) och dhcp_structural_pipeline.sh (for dHCP structural pipeline)
+Run script `neonatal-segmentation.sh` (for MIRTK DrawEM) och `dhcp_structural_pipeline.sh` (for dHCP structural pipeline)
 
-This runs DrawEM algorithm on anatomical T2w data.
+This runs DrawEM algorithm on anatomical T2w data (shou.
 
 NOTE: 
 - Faulty results are achieved for 3D-T2w (SPACE), so the algorithm is run on upsampled/highres cor/tra T2w. 
