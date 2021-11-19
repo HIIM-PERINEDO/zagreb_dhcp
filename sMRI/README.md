@@ -27,5 +27,3 @@ Converts a DrawEM segmentation into a 5TT file/s
 
 ### 5TT_neonatal-5TT
 This runs an adapted version of Manuel Bleza's procedure [neonatal-5TT](https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve MRtrix 5TT image
-
-To avoid ANTsJointLabelFusion step, run script neonatal-5TT_noANTsJointLabelFusion.sh
