@@ -3,7 +3,7 @@
 This folder harbours scripts for processing sMRI files
 
 ## 1. Preprocessing
-Run script process.sh
+Run script `preprocess.sh`
 
 - Upsamples inplane 2D anatomicals (tra T2w and cor T2w)
 - Registers anatomicals (FLAIR, cor highres T2w and tra highres T2w) to 3D-T2w
