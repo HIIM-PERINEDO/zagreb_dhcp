@@ -3,29 +3,29 @@
 This folder harbours scripts for processing sMRI files
 
 ## 1. Preprocessing
-Run script process.sh
-
-- Upsamples inplane 2D anatomicals (tra T2w and cor T2w)
-- Registers anatomicals (FLAIR, cor highres T2w and tra highres T2w) to 3D-T2w
-- Transforms FLAIR into T2w-space (3D-T2w) and creates adapted brain mask from transformed FLAIR
+Run script `preprocess.sh`
+- do motion-correction (not yet implemented)
+- make high-resolution versions of T2w MCRIB
+- create relevant brain masks for neonatal-segmentation
 
 ## 2. Neonatal segmentation
-Run script neonatal-segmentation.sh (for MIRTK DrawEM) och dhcp_structural_pipeline.sh (for dHCP structural pipeline)
-
-This runs DrawEM algorithm on anatomical T2w data.
+Run script `neonatal-segmentation.sh` (for MIRTK DrawEM) or `dhcp_structural_pipeline.sh` (for dHCP structural pipeline)
+This runs DrawEM algorithm on anatomical highres MCRIB T2w data.
 
 NOTE: 
-- Faulty results are achieved for 3D-T2w (SPACE), so the algorithm is run on upsampled/highres cor/tra T2w. 
-Preferably tra T2w since has more homogenous signal => better cortical segmentation
-- The current parameters from DrawEM in dhcp performs better than DrawEM1p3. To run dhcp's neonatal-segmentation, run script neonatal-segmentation_dhcp-structural-pipeline_only.sh
+- The current parameters from DrawEM in dhcp performs better than DrawEM1p3. 
+- To run dhcp's neonatal-segmentation, run script neonatal-segmentation_dhcp-structural-pipeline_only.sh
 
 ## 3. Neonatal-5TT
-Run script neonatal-5TT_DrawEM/MCRIB.sh
+Run script `neonatal-5TT_DrawEM.sh`or `neonatal-5TT_MCRIB.sh`.
+This creates 5TT maps to use for ACT tractography.
 
 ### 5TT_DrawEM
-Converts a DrawEM segmentation into a 5TT file/s
+The script/routine `neonatal-5TT_DrawEM.sh` converts a DrawEM segmentation into a 5TT file/s
 
 ### 5TT_neonatal-5TT
-This runs an adapted version of Manuel Bleza's procedure [neonatal-5TT](https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve MRtrix 5TT image
+The script/routine `neonatal-5TT_MCRIB.sh` runs an adapted version of Manuel Bleza's procedure [neonatal-5TT](https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT) to achieve a MRtrix 5TT image and M-CRIB parcellation using a co-registration routine (ANTs JointLabelFusion) and the M-CRIB atlas.
 
-To avoid ANTsJointLabelFusion step, run script neonatal-5TT_noANTsJointLabelFusion.sh
+NOTE: 
+- The implementation requires that the M-CRIB atlas has been run through DrawEM. This has been done in relevant subfolderns in "`/$atlasdir/M-CRIB`". 
+- A modified version (using MRtrix routine `5ttgen neonatal`) is being tested
