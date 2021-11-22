@@ -1,5 +1,5 @@
 #!/bin/bash
-# Zagrep dhcp
+# Zagrep Collab dhcp
 #
 usage()
 {
@@ -15,6 +15,7 @@ Arguments:
   sID				Subject ID (e.g. PMR002) 
   ssID                       	Session ID (e.g. MR2)
 Options:
+  -f / -heuristic_file		Heuristic file to use with heudiconv (default: $codedir/heudiconv_heuristics/zagreb_heuristic.py) Print usage.
   -h / -help / --help           Print usage.
 "
   exit;
@@ -26,21 +27,35 @@ Options:
 command=$@
 sID=$1
 ssID=$2
+shift; shift
 
-# Define Folders
+# Defaults
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-studydir=$PWD #studydir=`dirname -- "$codedir"`
+studydir=$PWD 
 rawdatadir=$studydir/rawdata
 dcmdir=$studydir/sourcedata
+heuristicfile=$codedir/heudiconv_heuristics/zagreb_heuristic.py
+
 logdir=${studydir}/derivatives/preprocessing_logs/sub-${sID}/ses-${ssID}
 scriptname=`basename $0 .sh`
+
+# Read arguments
+while [ $# -gt 0 ]; do
+    case "$1" in
+	-f|-heuristic_file)  shift; heuristicfile=$1; ;;
+	-h|-help|--help) usage; ;;
+	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
+	*) break ;;
+    esac
+    shift
+done
 
 if [ ! -d $rawdatadir ]; then mkdir -p $rawdatadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 
 # We place a .bidsignore here
 if [ ! -f $rawdatadir/.bidsignore ]; then
-echo -e "# Exclude following from BIDS-validator\n" > $rawdatadir/.bidsignore;
+    echo -e "# Exclude following from BIDS-validator\n" > $rawdatadir/.bidsignore;
 fi
 
 # we'll be running the Docker containers as yourself, not as root:
@@ -51,19 +66,24 @@ docker pull nipy/heudiconv:latest
 docker pull bids/validator:latest
 
 ###   Extract DICOMs into BIDS:   ###
-# The images were extracted and organized in BIDS format:
 
+# Get location and file for heuristic file
+heuristicdir=`dirname $heuristicfile`
+heuristicfile=`basename $heuristicfile`
+
+# Run heudiconv with docker container
 docker run --name heudiconv_container \
            --user $userID \
            --rm \
            -it \
            --volume $studydir:/base \
 	   --volume $codedir:/code \
+	   --volume $heuristicdir:/heuristic \
            --volume $dcmdir:/dataIn:ro \
            --volume $rawdatadir:/dataOut \
            nipy/heudiconv \
                -d /dataIn/sub-{subject}/ses-{session}/*/*.dcm \
-               -f /code/heudiconv_heuristics/zagreb_heuristic_run-index_dir-PA.py \
+               -f /heuristic/$heuristicfile \
                -s ${sID} \
                -ss ${ssID} \
                -c dcm2niix \
