@@ -16,7 +16,7 @@ Arguments:
 Options:
   -dwi				dMRI AP data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
   -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_sbref.nii.gz)
-  -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_dir-PA_run-1_dwi.nii.gz)
+  -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-dwi_dir-PA_run-1_epi.nii.gz)
   -dwiPAsbref			dMRI PA SBRef, potentially for registration and TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_run-1_sbref.nii.gz)
   -seAP				Spin-echo field map AP, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-AP_run-1_epi.nii.gz)
   -sePA				Spin-echo field map PA, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-PA_run-1_epi.nii.gz)
@@ -37,12 +37,12 @@ currdir=$PWD
 
 # Defaults
 dwi=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
-dwiPA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_dir-PA_run-1_dwi.nii.gz
+dwiPA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-dwi_dir-PA_run-1_epi.nii.gz
 dwiAPsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_sbref.nii.gz
 dwiPAsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_sbref.nii.gz
 seAP=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_run-1_epi.nii.gz
 sePA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_run-1_epi.nii.gz
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID
+datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -171,23 +171,25 @@ cd $currdir
 ##################################################################################
 # 2. TOPUP and EDDY for Motion- and susceptibility distortion correction
 
-# Work with SE PErevPE fmap
-cd $datadir/orig
-if [ ! -f seAP.mif.gz ]; then
-    mrconvert -json_import $seAP.json $seAP.nii.gz seAP.mif.gz
-fi
-if [ ! -f sePA.mif.gz ]; then
-    mrconvert -json_import $sePA.json $sePA.nii.gz sePA.mif.gz
-fi
+# Get relevant data from /orig for PErevPE estimation of fieldmap with TOPUP
+cd $datadir/preproc
+if [ ! -d topup ]; then mkdir topup; fi
+
+for file in $seAP $sePA $dwiAPsbref $dwiPAsbref $dwiPA; do
+    if [ ! -f topup/$file.mif.gz ]; then
+	mrconvert -json_import ../orig/$file.json ../orig/$file.nii.gz topup/$file.mif.gz
+    fi
+done
+
 cd $currdir
 
 # Work with b0 PErevPE fmap
 cd $datadir/preproc
 
 # Create b0APPA.mif.gz to go into TOPUP
-if [ ! -f b0APPA.mif.gz ];then
+if [ ! -f topup/b0APPA.mif.gz ];then
     echo "Create a PErevPE pair of SE images to use with TOPUP
-1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/preproc
+1. Do this by put one good b0 from dir-AP_dwi/sbref and dir-PA_dwi/sbref into a file b0APPA.mif.gz into $datadir/preproc/topup
 2. Run this script again.    
     	 "
     exit;
@@ -200,8 +202,8 @@ fi
 #
 
 if [ ! -f dwi_den_unr_eddy.mif.gz ];then
-   dwifslpreproc -se_epi b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
-	       -topup_options " --iout=field_mag_unwarped" \
+   dwifslpreproc -se_epi topup/b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
+	       -topup_options " --out=topup/field --fout=topup/field_map.nii.gz --iout=topup/field_mag_unwarped" \
 	       -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
 	       -eddyqc_all ../../qc \
 	       dwi_den_unr.mif.gz \
