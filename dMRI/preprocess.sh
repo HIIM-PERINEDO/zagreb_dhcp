@@ -255,20 +255,20 @@ cd $currdir
 cd $datadir
 
 # Create symbolic link to last file in /preproc and copy mask.mif.gz to $datadir
-ln -s preproc/$dwipreproclast dwi_preproc.mif.gz
-cp preproc/mask.mif.gz .
+mrconvert preproc/$dwipreproclast dwi_preproc.mif.gz
+mrconvert preproc/mask.mif.gz mask.mif.gz
 dwi=dwi_preproc
 
 # B0-normalisation
 if [ ! -f ${dwi}_norm.mif.gz ];then
-    dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_norm.mif.gz
+    dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_inorm.mif.gz
 fi
 
 # Extract mean b0, b1000 and b2600
 for bvalue in 0 1000 2600; do
     bfile=meanb$bvalue
     if [ ! -f $bfile.nii.gz ]; then
-	dwiextract -shells $bvalue ${dwi}_norm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
+	dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
 	mrcalc $bfile.mif.gz mask.mif.gz -mul ${bfile}_brain.mif.gz
 	mrconvert $bfile.mif.gz $bfile.nii.gz
 	mrconvert ${bfile}_brain.mif.gz ${bfile}_brain.nii.gz
@@ -280,7 +280,7 @@ done
 # Calculate diffusion tensor and tensor metrics
 
 if [ ! -f dt.mif.gz ]; then
-    dwi2tensor -mask mask.mif.gz ${dwi}_norm.mif.gz dt.mif.gz
+    dwi2tensor -mask mask.mif.gz ${dwi}_inorm.mif.gz dt.mif.gz
     tensor2metric -force -fa fa.mif.gz -adc adc.mif.gz -rd rd.mif.gz -ad ad.mif.gz -vector ev.mif.gz dt.mif.gz
 fi
 
