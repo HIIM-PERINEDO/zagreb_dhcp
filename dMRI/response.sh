@@ -5,15 +5,15 @@ usage()
 {
   base=$(basename "$0")
   echo "usage: $base subjectID sessionID [options]
-Estimation of CSD
+Estimation of response function
 
 Arguments:
   sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/dwi_preproc_norm.mif.gz)
+  -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/dwi_preproc_inorm.mif.gz)
   -mask				Mask for dMRI data (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/mask.mif.gz)
-  -response			Response function (tournier or msmt_5tt) (default: msmt_5tt)
+  -response			Response function (tournier, dhollander or msmt_5tt) (default: msmt_5tt)
   -m / -method			Method with which the segmentation was done (options DrawEM or neonatal-5TT) (default: DrawEM)
   -a / -atlas			Atlas used for segmentation (options ALBERT or M-CRIB) (default: ALBERT)
   -5TT				5TT in dMRI space (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/act/$method-$atlas/5TT_coreg.mif.gz)
@@ -36,7 +36,7 @@ currdir=$PWD
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
 method=DrawEM
 atlas=ALBERT
-dwi=$datadir/dwi/dwi_preproc_norm.mif.gz
+dwi=$datadir/dwi/dwi_preproc_inorm.mif.gz
 mask=$datadir/dwi/mask.mif.gz
 response=msmt_5tt
 
@@ -118,40 +118,44 @@ mask=`basename $mask .mif.gz`
 
 cd $datadir/dwi
 
-# output folder for CSD
-
-
 # ---- Tournier ----
 if [[ $response = tournier ]]; then
-    # Do CSD estimation
-    csddir=csd #Becomes as sub-folder in $datadir/dwi
-    if [ ! -d $csddir ];then mkdir -p $csddir;fi
-
-    if [ ! -f $csddir/CSD_${response}.mif.gz ]; then
-	echo "Estimating ODFs with CSD"
-	dwi2fod -force -mask $mask.mif.gz csd $dwi.mif.gz $csddir/${response}_response.txt $csddir/csd_${response}.mif.gz
-	echo Check results of ODFs
-	mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}.mif.gz -mode 2
+    # response fcn
+    responsedir=response #Becomes as sub-folder in $datadir/dwi
+    if [ ! -d $responsedir ];then mkdir -p $responsedir;fi    
+    if [ ! -f response/${response}_response.txt ]; then
+	echo "Estimating response function use $response method"
+	dwi2response tournier -force -mask  $mask.mif.gz -voxels $responsedir/${response}_sf.mif $dwi.mif.gz $responsedir/${response}_response.txt
+	echo Check results: response fcn and sf voxels
+	shview  response/${response}_response.txt
+	mrview  meanb0_brain.nii.gz -roi.load $responsedir/${response}_sf.mif -roi.opacity 0.5 -mode 2
     fi
 fi
 
-# ---- MSMT = msmt_5tt and dhollander ----
-if [[ $response = dhollander ]]; then
-    csddir=csd #Becomes as sub-folder in $datadir/dwi
-    if [ ! -d $csddir ];then mkdir -p $csddir;fi
-fi
+# ---- MSMT ----
 if [[ $response = msmt_5tt ]]; then
-    csddir=csd/$method-$atlas #Becomes as sub-folder in $datadir/dwi
-    if [ ! -d $csddir ];then mkdir -p $csddir;fi
+    responsedir=response/$method-$atlas #Becomes as sub-folder in $datadir/dwi
+    # Estimate msmt_csd response functions (note use FA < 0.15 for gm and csf)
+    echo "Estimating response function use $response method"
+    dwi2response msmt_5tt -force -voxels $responsedir/${response}_sf.mif -fa 0.15 $dwi.mif.gz act/$method-$atlas/$act5tt.mif.gz $responsedir/${response}_wm.txt $responsedir/${response}_gm.txt $responsedir/${response}_csf.txt
+    echo "Check results for response fcns (wm, gm and csf) and single-fibre voxels (sf)"
+    shview  $responsedir/${response}_wm.txt
+    shview  $responsedir/${response}_gm.txt
+    shview  $responsedir/${response}_csf.txt
+    mrview  meanb0_brain.nii.gz -overlay.load $responsedir/${response}_sf.mif -overlay.opacity 0.5 -mode 2
 fi
 
-    # Calculate ODFs
-    echo "Calculating CSD using ACT and $response"
-    # model with all 3 tissue types: WM GM CSF
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm_3tt.mif.gz $csddir/${response}_gm.txt $csddir/csd_${response}_gm_3tt.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf_3tt.mif.gz
-    # model with all 2 tissue types: WM CSF
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm_2tt.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf_2tt.mif.gz
-    mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}_wm_3tt.mif.gz -odf.load_sh $csddir/csd_${response}_wm_2tt.mif.gz -mode 2;
+# ---- dhollander ----
+if [[ $response = dhollander ]]; then
+    responsedir=response #Becomes as sub-folder in $datadir/dwi
+    # Estimate dhollander msmt response functions (use FA < 0.10 according to Blesa et al Cereb Cortex 2021)
+    echo "Estimating response function use $response method"
+    dwi2response dhollander -force -mask $mask.mif.gz -voxels $responsedir/${response}_sf.mif -fa 0.1 -lmax 8 $dwi.mif.gz $responsedir/${response}_wm.txt $responsedir/${response}_gm.txt $responsedir/${response}_csf.txt
+    echo "Check results for response fcns (wm, gm and csf) and single-fibre voxels (sf)"
+    shview  $responsedir/${response}_wm.txt
+    shview  $responsedir/${response}_gm.txt
+    shview  $responsedir/${response}_csf.txt
+    mrview  meanb0_brain.nii.gz -overlay.load $responsedir/${response}_sf.mif -overlay.opacity 0.5 -mode 2
 fi
 
 

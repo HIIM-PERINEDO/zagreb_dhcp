@@ -119,14 +119,20 @@ mask=`basename $mask .mif.gz`
 cd $datadir/dwi
 
 # output folder for CSD
-
+csddir=csd/$method-$atlas #Becomes as sub-folder in $datadir/dwi
+if [ ! -d $csddir ];then mkdir -p $csddir;fi
 
 # ---- Tournier ----
 if [[ $response = tournier ]]; then
+    # response fcn
+    if [ ! -f $csddir/${response}_response.txt ]; then
+	echo "Estimating response function use $response method"
+	dwi2response tournier -force -mask  $mask.mif.gz -voxels $csddir/${response}_sf.mif $dwi.mif.gz $csddir/${response}_response.txt
+	echo Check results: response fcn and sf voxels
+	shview  $csddir/${response}_response.txt
+	mrview  meanb0_brain.nii.gz -roi.load $csddir/${response}_sf.mif -roi.opacity 0.5 -mode 2
+    fi
     # Do CSD estimation
-    csddir=csd #Becomes as sub-folder in $datadir/dwi
-    if [ ! -d $csddir ];then mkdir -p $csddir;fi
-
     if [ ! -f $csddir/CSD_${response}.mif.gz ]; then
 	echo "Estimating ODFs with CSD"
 	dwi2fod -force -mask $mask.mif.gz csd $dwi.mif.gz $csddir/${response}_response.txt $csddir/csd_${response}.mif.gz
@@ -135,23 +141,20 @@ if [[ $response = tournier ]]; then
     fi
 fi
 
-# ---- MSMT = msmt_5tt and dhollander ----
-if [[ $response = dhollander ]]; then
-    csddir=csd #Becomes as sub-folder in $datadir/dwi
-    if [ ! -d $csddir ];then mkdir -p $csddir;fi
-fi
+# ---- MSMT ----
 if [[ $response = msmt_5tt ]]; then
-    csddir=csd/$method-$atlas #Becomes as sub-folder in $datadir/dwi
-    if [ ! -d $csddir ];then mkdir -p $csddir;fi
-fi
-
+    # Estimate msmt_csd response functions (note use FA < 0.15 for gm and csf)
+    echo "Estimating response function use $response method"
+    dwi2response msmt_5tt -force -voxels $csddir/${response}_sf.mif -fa 0.15 $dwi.mif.gz act/$method-$atlas/$act5tt.mif.gz $csddir/${response}_wm.txt $csddir/${response}_gm.txt $csddir/${response}_csf.txt
+    echo "Check results for response fcns (wm, gm and csf) and single-fibre voxels (sf)"
+    shview  $csddir/${response}_wm.txt
+    shview  $csddir/${response}_gm.txt
+    shview  $csddir/${response}_csf.txt
+    mrview  meanb0_brain.nii.gz -overlay.load $csddir/${response}_sf.mif -overlay.opacity 0.5 -mode 2
     # Calculate ODFs
     echo "Calculating CSD using ACT and $response"
-    # model with all 3 tissue types: WM GM CSF
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm_3tt.mif.gz $csddir/${response}_gm.txt $csddir/csd_${response}_gm_3tt.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf_3tt.mif.gz
-    # model with all 2 tissue types: WM CSF
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm_2tt.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf_2tt.mif.gz
-    mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}_wm_3tt.mif.gz -odf.load_sh $csddir/csd_${response}_wm_2tt.mif.gz -mode 2;
+    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm.mif.gz $csddir/${response}_gm.txt $csddir/csd_${response}_gm.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf.mif.gz
+    mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}_wm.mif.gz -mode 2;
 fi
 
 

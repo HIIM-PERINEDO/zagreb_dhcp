@@ -11,11 +11,11 @@ Arguments:
   sID				Subject ID (e.g. PK356) 
   ssID                       	Session ID (e.g. MR1)
 Options:
-  -csd				CSD mif.gz-file (default: derivatives/dMRI/sub-sID/ses-ssID/csd/csd_msmt_5tt_wm.mif.gz)
-  -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI/sub-sID/ses-ssID/act/5TT.mif.gz)
+  -csd				CSD mif.gz-file (default: derivatives/dMRI/sub-sID/ses-ssID/csd/\$method-\$atlas/csd_msmt_5tt_wm_2tt.mif.gz)
+  -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI/sub-sID/ses-ssID/act/\$method-\$atlas/5TT_coreg.mif.gz)
   -nbr				Number of streamlines in whole-brain tractogram (default: 10M)
   -threads			Number of threads for parallell processing (default: 10)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID/dwi)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -31,16 +31,15 @@ ssID=$2
 currdir=$PWD
 
 # Defaults
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-
 method=neonatal-5TT
 atlas=M-CRIB
-actdir=act_neonatal-5TT-M-CRIB
-csddir=csd/$actdir
-tractdir=tractography/$actdir
+datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi
+actdir=act/$method-$atlas
+csddir=csd/$method-$atlas
+tractdir=tractography/$method-$atlas
 
-csd=derivatives/dMRI/sub-$sID/ses-$ssID/$csddir/csd_msmt_5tt_wm.mif.gz
-act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/$actdir/5TT_coreg.mif.gz
+csd=$datadir/$csddir/csd_msmt_5tt_wm_2tt.mif.gz
+act5tt=$datadir/$actdir/5TT_coreg.mif.gz
 
 nbr=10M
 threads=10
@@ -122,13 +121,17 @@ if [ ! -f $actdir/${act5tt}_gmwmi.mif.gz ];then
 fi
 
 # Whole-brain tractography
-cutoff=0.05; # This is the value that is used in Blesa et al, Cerebral Cortex 2021. Default is 0.1
-init=$cutoff; # default is equal to cutoff
-cutofftext=`echo $cutoff | sed 's/\./p/g'`
-inittext=$cutofftext;
-# using above cutoff and init
+# tckgen parameters are taken from Blesa et al, Cerebral Cortex 2021. Default is 0.1
+cutoff=0.05 
+init=$cutoff # default is equal to cutoff
+maxlength=200
+minlength=2
 if [ ! -f $tractdir/whole_brain_${nbr}.tck ];then
-    tckgen -nthreads $threads -cutoff $cutoff -seed_cutoff $init -act $actdir/$act5tt.mif.gz -backtrack -seed_gmwmi $actdir/${act5tt}_gmwmi.mif.gz -crop_at_gmwmi -select $nbr $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}.tck
+    tckgen -nthreads $threads \
+	   -cutoff $cutoff -seed_cutoff $init -minlength $minlength -maxlength $maxlength \
+	   -act $actdir/$act5tt.mif.gz -backtrack -seed_dynamic $csddir/$csd.mif.gz \
+	   -select $nbr \
+	   $csddir/$csd.mif.gz $tractdir/whole_brain_$nbr.tck
 fi
 if [ ! -f $tractdir/whole_brain_${nbr}_edit100k.tck ];then
     tckedit $tractdir/whole_brain_${nbr}.tck -number 100k $tractdir/whole_brain_${nbr}_edit100k.tck
