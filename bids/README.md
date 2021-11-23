@@ -8,6 +8,8 @@ BIDS format: https://bids-specification.readthedocs.io/en/stable/
 
 Heudiconv: https://heudiconv.readthedocs.io/en/latest/
 
+After BIDS conversion, the rawdata is inspected (launch the script `QC_visalise_rawdata.sh`)
+
 ## Scanning protocol 
 1. Head Scout
 2. Localizer
