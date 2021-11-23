@@ -15,7 +15,7 @@ Arguments:
   sID				Subject ID (e.g. PMR002) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -f / -heuristic_file		Heuristic file to use with heudiconv (default: $codedir/heudiconv_heuristics/zagreb_heuristic.py) Print usage.
+  -f / -heuristic_file		Full path to heuristic file to use with heudiconv (default: $codedir/heudiconv_heuristics/zagreb_heuristic.py) Print usage.
   -h / -help / --help           Print usage.
 "
   exit;

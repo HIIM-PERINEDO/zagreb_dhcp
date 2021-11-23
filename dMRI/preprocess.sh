@@ -16,7 +16,7 @@ Arguments:
 Options:
   -dwi				dMRI AP data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
   -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_sbref.nii.gz)
-  -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_run-1_dwi.nii.gz)
+  -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-dwi_dir-PA_run-1_epi.nii.gz)
   -dwiPAsbref			dMRI PA SBRef, potentially for registration and TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_run-1_sbref.nii.gz)
   -seAP				Spin-echo field map AP, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-AP_run-1_epi.nii.gz)
   -sePA				Spin-echo field map PA, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-PA_run-1_epi.nii.gz)
@@ -37,12 +37,12 @@ currdir=$PWD
 
 # Defaults
 dwi=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
-dwiPA=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_dwi.nii.gz
+dwiPA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-dwi_dir-PA_run-1_epi.nii.gz
 dwiAPsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_sbref.nii.gz
 dwiPAsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_sbref.nii.gz
 seAP=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_run-1_epi.nii.gz
 sePA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_run-1_epi.nii.gz
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID
+datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -171,43 +171,42 @@ cd $currdir
 ##################################################################################
 # 2. TOPUP and EDDY for Motion- and susceptibility distortion correction
 
-# Work with SE PErevPE fmap
-cd $datadir/orig
-if [ ! -f seAPtmp.mif ]; then
-    mrconvert -json_import $seAP.json $seAP.nii.gz seAPtmp.mif
-fi
-if [ ! -f sePA.mif.gz ]; then
-    mrconvert -json_import $sePA.json $sePA.nii.gz sePAtmp.mif
-fi
-if [ ! -f ../preproc/seAPPA.mif.gz ]; then
-    mrcat seAPtmp.mif sePAtmp.mif ../preproc/seAPPA.mif.gz
-fi
-rm se*tmp.mif
+# Get relevant data from /orig for PErevPE estimation of fieldmap with TOPUP
+cd $datadir/preproc
+if [ ! -d topup ]; then mkdir topup; fi
+
+for file in $seAP $sePA $dwiAPsbref $dwiPAsbref $dwiPA; do
+    if [ ! -f topup/$file.mif.gz ]; then
+	mrconvert -json_import ../orig/$file.json ../orig/$file.nii.gz topup/$file.mif.gz
+    fi
+done
+
 cd $currdir
 
 # Work with b0 PErevPE fmap
 cd $datadir/preproc
 
 # Create b0APPA.mif.gz to go into TOPUP
-if [ ! -f b0APPA.mif.gz ];then
+if [ ! -f topup/b0APPA.mif.gz ];then
     echo "Create a PErevPE pair of SE images to use with TOPUP
-1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/preproc
-2. Run this script again.    
+1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/preproc/topup
+2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
+3. Run this script again.    
     	 "
     exit;
 fi
 
 
-# Do Topup and Eddy with dwipreproc
+# Do Topup and Eddy with dwifslpreproc
 #
 # use b0APPA.mif.gz (i.e. choose the two best b0s - could be placed first in dwiAP and dwiPA
 #
 
 if [ ! -f dwi_den_unr_eddy.mif.gz ];then
-   dwifslpreproc -se_epi b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
+   dwifslpreproc -se_epi topup/b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
 	       -topup_options " --iout=field_mag_unwarped" \
-	       -eddy_options " --slm=linear --repol --mporder=16 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 " \
-	       -eddyqc_all eddy \
+	       -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
+	       -eddyqc_all ../../qc \
 	       dwi_den_unr.mif.gz \
 	       dwi_den_unr_eddy.mif.gz;
    # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
@@ -220,7 +219,7 @@ cd $currdir
 # 3. Mask generation, N4 biasfield correction, meanb0 generation and tensor estimation
 cd $datadir/preproc
 
-echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation, meanb0 generation and tensor estimation"
+echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation, meanb0,400,1000,2600 generation and tensor estimation"
 
 # point to right filebase
 dwi=dwi_den_unr_eddy
@@ -255,20 +254,20 @@ cd $currdir
 cd $datadir
 
 # Create symbolic link to last file in /preproc and copy mask.mif.gz to $datadir
-ln -s preproc/$dwipreproclast dwi_preproc.mif.gz
-cp preproc/mask.mif.gz .
+mrconvert preproc/$dwipreproclast dwi_preproc.mif.gz
+mrconvert preproc/mask.mif.gz mask.mif.gz
 dwi=dwi_preproc
 
 # B0-normalisation
 if [ ! -f ${dwi}_norm.mif.gz ];then
-    dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_norm.mif.gz
+    dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_inorm.mif.gz
 fi
 
 # Extract mean b0, b1000 and b2600
 for bvalue in 0 1000 2600; do
     bfile=meanb$bvalue
     if [ ! -f $bfile.nii.gz ]; then
-	dwiextract -shells $bvalue ${dwi}_norm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
+	dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
 	mrcalc $bfile.mif.gz mask.mif.gz -mul ${bfile}_brain.mif.gz
 	mrconvert $bfile.mif.gz $bfile.nii.gz
 	mrconvert ${bfile}_brain.mif.gz ${bfile}_brain.nii.gz
@@ -280,7 +279,7 @@ done
 # Calculate diffusion tensor and tensor metrics
 
 if [ ! -f dt.mif.gz ]; then
-    dwi2tensor -mask mask.mif.gz ${dwi}_norm.mif.gz dt.mif.gz
+    dwi2tensor -mask mask.mif.gz ${dwi}_inorm.mif.gz dt.mif.gz
     tensor2metric -force -fa fa.mif.gz -adc adc.mif.gz -rd rd.mif.gz -ad ad.mif.gz -vector ev.mif.gz dt.mif.gz
 fi
 
