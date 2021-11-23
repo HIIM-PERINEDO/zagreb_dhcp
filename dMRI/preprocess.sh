@@ -189,8 +189,9 @@ cd $datadir/preproc
 # Create b0APPA.mif.gz to go into TOPUP
 if [ ! -f topup/b0APPA.mif.gz ];then
     echo "Create a PErevPE pair of SE images to use with TOPUP
-1. Do this by put one good b0 from dir-AP_dwi/sbref and dir-PA_dwi/sbref into a file b0APPA.mif.gz into $datadir/preproc/topup
-2. Run this script again.    
+1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/preproc/topup
+2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
+3. Run this script again.    
     	 "
     exit;
 fi
@@ -203,7 +204,7 @@ fi
 
 if [ ! -f dwi_den_unr_eddy.mif.gz ];then
    dwifslpreproc -se_epi topup/b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
-	       -topup_options " --out=topup/field --fout=topup/field_map.nii.gz --iout=topup/field_mag_unwarped" \
+	       -topup_options " --iout=field_mag_unwarped" \
 	       -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
 	       -eddyqc_all ../../qc \
 	       dwi_den_unr.mif.gz \
