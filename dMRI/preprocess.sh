@@ -173,16 +173,12 @@ cd $currdir
 
 # Work with SE PErevPE fmap
 cd $datadir/orig
-if [ ! -f seAPtmp.mif ]; then
-    mrconvert -json_import $seAP.json $seAP.nii.gz seAPtmp.mif
+if [ ! -f seAP.mif.gz ]; then
+    mrconvert -json_import $seAP.json $seAP.nii.gz seAP.mif.gz
 fi
 if [ ! -f sePA.mif.gz ]; then
-    mrconvert -json_import $sePA.json $sePA.nii.gz sePAtmp.mif
+    mrconvert -json_import $sePA.json $sePA.nii.gz sePA.mif.gz
 fi
-if [ ! -f ../preproc/seAPPA.mif.gz ]; then
-    mrcat seAPtmp.mif sePAtmp.mif ../preproc/seAPPA.mif.gz
-fi
-rm se*tmp.mif
 cd $currdir
 
 # Work with b0 PErevPE fmap
@@ -198,7 +194,7 @@ if [ ! -f b0APPA.mif.gz ];then
 fi
 
 
-# Do Topup and Eddy with dwipreproc
+# Do Topup and Eddy with dwifslpreproc
 #
 # use b0APPA.mif.gz (i.e. choose the two best b0s - could be placed first in dwiAP and dwiPA
 #
@@ -206,8 +202,8 @@ fi
 if [ ! -f dwi_den_unr_eddy.mif.gz ];then
    dwifslpreproc -se_epi b0APPA.mif.gz -rpe_header -align_seepi -nocleanup \
 	       -topup_options " --iout=field_mag_unwarped" \
-	       -eddy_options " --slm=linear --repol --mporder=16 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 " \
-	       -eddyqc_all eddy \
+	       -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
+	       -eddyqc_all ../../qc \
 	       dwi_den_unr.mif.gz \
 	       dwi_den_unr_eddy.mif.gz;
    # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
@@ -220,7 +216,7 @@ cd $currdir
 # 3. Mask generation, N4 biasfield correction, meanb0 generation and tensor estimation
 cd $datadir/preproc
 
-echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation, meanb0 generation and tensor estimation"
+echo "Pre-processing with mask generation, N4 biasfield correction, Normalisation, meanb0,400,1000,2600 generation and tensor estimation"
 
 # point to right filebase
 dwi=dwi_den_unr_eddy
