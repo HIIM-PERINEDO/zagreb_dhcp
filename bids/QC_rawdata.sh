@@ -1,6 +1,7 @@
 #!/bin/bash
 # Zagrep Collab dhcp
-# Script for QC eye-balling of rawdata images by input from a BIDS session.tsv file
+# Script for QC eye-balling of images in a BIDS rawdata folder given from a heudiconv "session.tsv"-file
+# Creates a session.tsv file for QC purposes
 #
 usage()
 {
@@ -21,7 +22,6 @@ dMRI_rawdata_visualisation ()
 {
     # get input file
     file=$1;
-    echo $file
 
     filebase=`basename $file .nii.gz`
     filedir=`dirname $file`
@@ -71,24 +71,39 @@ done
 # Go to rawdata dir
 cd $rawdatadir/sub-$sID/ses-$ssID
 
-echo "QC eye-balling of BIDS rawdata given by $tsvfile"
+# Create $rawdatadir/sub-$sID/ses-$ssID/session.tsv file is not present
+if [ ! -f session.tsv ]; then
+    {
+	echo "Creating session.tsv file from $tsvfile"
+	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature" > session.tsv
 
+	read;
+	while IFS= read -r line
+	do
+	    file=`echo "$line" | awk '{ print $1 }'`
+	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB" >> session.tsv
+	done
+    } < "$tsvfile"
+fi 
+
+# Eye-ball data in session.tsv 
+echo "QC eye-balling of BIDS rawdata given by session.tsv file"
 # Read input file line by line, but skip first line
 {
     read;
+    counter=2; #Keeps track of line number to display on I/O to make it easier to detect corresponding line in session.tsv file
     while IFS= read -r line
     do
-	file=`echo "$line" | awk '{ print $1 }'`
+	file=`echo "$line" | awk '{ print $3 }'`
 	filedir=`dirname $file`
-	
+	echo $counter $file
 	if [ $filedir == "dwi" ]; then
 	    dMRI_rawdata_visualisation $file;
 	else
-	    echo $file
 	    mrview $file -mode 2 
 	fi
-        
+        let counter++
     done
-} < "$tsvfile"
+} < session.tsv
 
 cd $studydir
