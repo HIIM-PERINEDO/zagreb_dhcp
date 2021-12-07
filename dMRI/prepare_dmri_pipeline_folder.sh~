@@ -6,7 +6,6 @@ usage()
   base=$(basename "$0")
   echo "usage: $base subjectID sessionID [options]
 Script to preprocess dMRI data 
-Requires that folder structure for dMRI pipeline has been run (e.g. with script prepare_dmri_pipeline.sh)
 1. MP-PCA Denoising and Gibbs Unringing 
 2. TOPUP and EDDY for motion- and susceptebility image distortion correction
 3. N4 biasfield correction, Normalisation
@@ -15,9 +14,12 @@ Arguments:
   sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -s / -session-file		Session file to depict which files should go into preprocessing. Overrides defaults below (default: $datadir/session.tsv)
-  -dwi				dMRI AP data (default: $datadir/dwi/orig/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
-  -SE-pair			SE APPA pair for TOPUP - NOTE vol 0 will go in as first bzero in dwi (default: $datadir/dwi/preproc/b0APPA.mif.gz)
+  -dwi				dMRI AP data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
+  -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_sbref.nii.gz)
+  -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-dwi_dir-PA_run-1_epi.nii.gz)
+  -dwiPAsbref			dMRI PA SBRef, potentially for registration and TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-PA_run-1_sbref.nii.gz)
+  -seAP				Spin-echo field map AP, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-AP_run-1_epi.nii.gz)
+  -sePA				Spin-echo field map PA, for TOPUP (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-se_dir-PA_run-1_epi.nii.gz)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
@@ -34,10 +36,13 @@ ssID=$2
 currdir=$PWD
 
 # Defaults
+dwi=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
+dwiPA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-dwi_dir-PA_run-1_epi.nii.gz
+dwiAPsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-AP_run-1_sbref.nii.gz
+dwiPAsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_sbref.nii.gz
+seAP=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_run-1_epi.nii.gz
+sePA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_run-1_epi.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
-b0APPA=$datadir/dwi/b0APPA.mif.gz
-sessionfile=$datadir/session.tsv
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -45,9 +50,12 @@ codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
-	-s|session-file) shift; sessionfile= $1; ;;
 	-dwi) shift; dwi=$1; ;;
-	-SE-pair) shift; sepair=$1; ;;
+	-dwiAPsbref) shift; dwiAPsbref=$1; ;;
+	-dwiPA) shift; dwiPA=$1; ;;
+	-dwiPAsbref) shift; dwiPAsbref=$1; ;;
+	-seAP) shift; seAP=$1; ;;
+	-seAP) shift; sePA=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
 	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
@@ -58,15 +66,21 @@ done
 
 # Check if images exist, else put in No_image
 if [ ! -f $dwi ]; then dwi=""; fi
-if [ ! -f $sessionfile ]; then sessionfile=""; fi
-if [ ! -f $sepair ]; then sepair=""; fi
+if [ ! -f $dwiAPsbref ]; then dwiAPsbref=""; fi
+if [ ! -f $dwiPA ]; then dwiPA=""; fi
+if [ ! -f $dwiPAsbref ]; then dwiPAsbref=""; fi
+if [ ! -f $seAP ]; then seAP=""; fi
+if [ ! -f $sePA ]; then sePA=""; fi
 
-echo "dMRI preprocessing
+echo "Registration and sMRI-processing
 Subject:       	$sID 
 Session:        $ssID
-Session file:	$sessionfile
 DWI (AP):	$dwi
-SE pair:	$sepair	       
+DWI (AP_SBRef):	$dwiAPsbref
+DWI (PA):      	$dwiPA
+DWI (PA_SBRef): $dwiPAsbref
+SE fMAP (AP):  	$seAP	       
+SE fMAP (PA):  	$sePA	       
 Directory:     	$datadir 
 $BASH_SOURCE   	$command
 ----------------------------"
@@ -77,83 +91,59 @@ if [ ! -d $logdir ];then mkdir -p $logdir; fi
 
 echo dMRI preprocessing on subject $sID and session $ssID
 script=`basename $0 .sh`
-echo Executing: $codedir/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
-echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
-echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
-cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
+echo Executing: $codedir/sMRI/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
+echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
+echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
+cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
 echo
 
 ##################################################################################
 # 0. Copy to files to datadir/preproc (incl .json and bvecs/bvals files if present at original location)
 
-if [ ! -d $datadir/dwi/preproc/topup ]; then mkdir -p $datadir/dwi/preproc/topup; fi
+if [ ! -d $datadir/dwi/orig ]; then mkdir -p $datadir/dwi/orig; fi
 
-# If we have a session.tsv file, use this
-if [ -f $sessionfile ]; then
-    # Read $sessionfile and use entries to create relevant files
-    {
-	read
-	while IFS= read -r line
-	do
-	    # check if the file/image has passed QC (qc_pass_fail = fourth column)
-	    QCPass=`echo "$line" | awk '{ print $4 }'`
+filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
+for file in $filelist; do
+    filebase=`basename $file .nii.gz`;
+    filedir=`dirname $file`
+    cp $file $filedir/$filebase.json $filedir/$filebase.bval $filedir/$filebase.bvec $datadir/dwi/orig/.
+done
 
-	    if [ $QCPass == 1 ]; then
+#Then update variables to only refer to filebase names (instead of path/file)
+dwi=`basename $dwi .nii.gz` 
+dwiAPsbref=`basename $dwiAPsbref .nii.gz` 
+dwiPA=`basename $dwiPA .nii.gz`
+dwiPAsbref=`basename $dwiPAsbref .nii.gz`
+seAP=`basename $seAP .nii.gz`
+sePA=`basename $sePA .nii.gz`
 
-		# Get file name
-		file=`echo "$line" | awk '{ print $3 }'`
-		filebase=`basename $file .nii.gz`
-		filedir=`dirname $file`
 
-		# Read flags in session.tsv file with corresponding column index
-		# DWI AP data
-		dwiAP=`echo "$line" | awk '{ print $6 }'`
-		if [ $dwiAP == 1 ]; then		    
-		    if [ ! -f $datadir/dwi/preproc/dwi.mif.gz ]; then 
-			mrconvert $datadir/$filedir/$filebase.nii.gz \
-				  -json_import $datadir/$filedir/$filebase.json \
-				  -fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval  \
-				  $datadir/dwi/preproc/dwi.mif.gz
-		    fi
-		fi		
-		# b0AP and b0PA data
-		volb0AP=`echo "$line" | awk '{ print $7 }'`
-		if [ ! $volb0AP == "-" ]; then
-		    if [ ! -f $datadir/dwi/preproc/b0AP.mif.gz ]; then
-			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0AP -axis 0,1,2 $datadir/dwi/preproc/topup/b0AP.mif.gz
-		    fi
-		fi
-		volb0PA=`echo "$line" | awk '{ print $8 }'`
-		if [ ! $volb0PA == "-" ]; then
-		    if [ ! -f $datadir/dwi/preproc/b0PA.mif.gz ]; then
-			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0PA -axis 0,1,2 $datadir/dwi/preproc/topup/b0PA.mif.gz
-		    fi
-		fi
-	done
-    } < "$sessionfile";
+##################################################################################
+# 0a. Create dwi.mif.gz to work with in /preproc
+
+if [ ! -d $datadir/dwi/preproc ]; then mkdir -p $datadir/dwi/preproc; fi
+
+cd $datadir/dwi
+
+if [[ $dwi = "" ]];then
+    echo "No dwi data provided";
+    exit;
 else
-    echo "No session.tsv file, using input or defaults"
-    filedir=`dirname $dwi`
-    filebase=`basename $dwi .nii.gz`
-    mrconvert $filedir/filebase.nii.gz \
-	      -json_import $filedir/$filebase.json \
-	      -fslgrad $filedir/$filebase.bvec $filedir/$filebase.bval  \
-	      $datadir/dwi/preproc/dwi.mif.gz
+    # Create a dwi.mif.gz-file to work with
+    if [ ! -f preproc/dwi.mif.gz ]; then
+	mrconvert -json_import orig/$dwi.json -fslgrad orig/$dwi.bvec orig/$dwi.bval orig/$dwi.nii.gz preproc/dwi.mif.gz
+    fi
 fi
 
+cd $currdir
 
 ##################################################################################
 # 0b. Create dwi.mif.gz to work with in /preproc
 
 cd $datadir/dwi/preproc
 
-if [ ! -d topup ]; then mkdir topup; fi
-
 # Create b0APPA.mif.gz to go into TOPUP
-if [ ! -f topup/b0APPA.mif.gz ]; then
-    if [ -f topup
+if [ ! -f topup/b0APPA.mif.gz ];then
     echo "Create a PErevPE pair of SE images to use with TOPUP
 1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/dwi/preproc/topup
 2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with

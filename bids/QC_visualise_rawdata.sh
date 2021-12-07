@@ -38,6 +38,7 @@ dMRI_rawdata_visualisation ()
 	shells=`mrinfo -shell_bvalues tmp.mif`;
 	for shell in $shells; do
 	    echo Inspecting shell with b-value=$shell
+	    if [ $shell == 5 ]; then echo b0 have this volume indices; mrinfo -shell_indices tmp.mif; fi
 	    dwiextract -quiet -shell $shell tmp.mif - | mrview - -mode 2 
 	done
 	rm tmp.mif
@@ -75,13 +76,13 @@ cd $rawdatadir/sub-$sID/ses-$ssID
 if [ ! -f session.tsv ]; then
     {
 	echo "Creating session.tsv file from $tsvfile"
-	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature" > session.tsv
+	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_dwiAP\tdMRI_vol_for_b0AP\tdMRI_vol_for_b0AP" > session.tsv
 
 	read;
 	while IFS= read -r line
 	do
 	    file=`echo "$line" | awk '{ print $1 }'`
-	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB" >> session.tsv
+	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t\-\t\-\t\-" >> session.tsv
 	done
     } < "$tsvfile"
 fi 
