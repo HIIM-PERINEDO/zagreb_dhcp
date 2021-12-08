@@ -11,9 +11,12 @@ Arguments:
   sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/dwi_preproc_inorm.mif.gz)
+  -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/dwi_preproc_norm.mif.gz)
   -mask				Mask for dMRI data (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/mask.mif.gz)
-  -response			Response function (tournier or dhollander) (default: dhollander)
+  -response			Response function (tournier or msmt_5tt) (default: msmt_5tt)
+  -m / -method			Method with which the segmentation was done (options DrawEM or neonatal-5TT) (default: DrawEM)
+  -a / -atlas			Atlas used for segmentation (options ALBERT or M-CRIB) (default: ALBERT)
+  -5TT				5TT in dMRI space (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/act/$method-$atlas/5TT_coreg.mif.gz)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
@@ -26,24 +29,28 @@ Options:
 command=$@
 sID=$1
 ssID=$2
-shift; shift
 
 currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-dwi=$datadir/dwi/dwi_preproc_inorm.mif.gz
+method=DrawEM
+atlas=ALBERT
+dwi=$datadir/dwi/dwi_preproc_norm.mif.gz
 mask=$datadir/dwi/mask.mif.gz
-response=dhollander
+response=msmt_5tt
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-
+shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-dwi) shift; dwi=$1; ;;
 	-mask) shift; mask=$1; ;;
+	-m|-method) shift; method=$1; ;;
+	-a|-atlas) shift; atlas=$1; ;;      
+	-5TT) shift; act5tt=$1; ;;
 	-response) shift; response=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
@@ -53,12 +60,15 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+act5tt=$datadir/dwi/act/$method-$atlas/5TT_coreg.mif.gz
+
 echo "CSD estimation of dMRI using 5TT
 Subject:       $sID 
 Session:       $ssID
 DWI:	       $dwi
 Mask:	       $mask
 Response:      $response
+5TT:           $act5tt
 Directory:     $datadir 
 $BASH_SOURCE   $command
 ----------------------------"
@@ -78,10 +88,13 @@ echo
 ##################################################################################
 # 0. Copy to files to datadir (incl .json if present at original location)
 
-for file in $dwi $mask; do
+for file in $dwi $act5tt $mask; do
     origdir=`dirname $file`
     filebase=`basename $file .mif.gz`
-    outdir=$datadir/dwi
+    if [[ $file = $act5tt ]];then
+	outdir=$datadir/dwi/act/$method-$atlas
+    else
+	outdir=$datadir/dwi
     fi
 
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
@@ -96,7 +109,9 @@ done
 
 # Update variables to point at corresponding filebases in $datadir
 dwi=`basename $dwi .mif.gz`
+act5tt=`basename $act5tt .mif.gz`
 mask=`basename $mask .mif.gz`
+
 
 ##################################################################################
 ## Make Response Function estimation and then CSD calcuation
