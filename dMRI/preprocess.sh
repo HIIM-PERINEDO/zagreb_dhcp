@@ -236,6 +236,7 @@ if [ ! -f dwi_den_unr_eddy.mif.gz ];then
     # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
 fi
 # Now cleanup by transferring relevant files to topup folder and deleting scratch folder
+mv eddy/quad ../../qc/.
 mv $scratchdir/field_* $scratchdir/topup_* topup/.
 rm -rf $scratchdir 
 
