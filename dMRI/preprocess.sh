@@ -30,19 +30,24 @@ Options:
 command=$@
 sID=$1
 ssID=$2
+shift; shift
 
 currdir=$PWD
 
 # Defaults
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
-b0APPA=$datadir/dwi/b0APPA.mif.gz
-sessionfile=$datadir/session.tsv
+rawdatadir=rawdata/sub-$sID/ses-$ssID
+sessionfile=$rawdatadir/session.tsv
+
+datadir=derivatives/dMRI_study_structural_connectivity_PKandPMR/sub-$sID/ses-$ssID
+if [ ! -f $sessionfile ]; then
+    dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
+    b0APPA=$datadir/dwi/b0APPA.mif.gz
+fi
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-shift; shift
+
 while [ $# -gt 0 ]; do
     case "$1" in
 	-s|session-file) shift; sessionfile= $1; ;;
@@ -84,7 +89,18 @@ cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&
 echo
 
 ##################################################################################
-# 0. Copy to files to datadir/preproc (incl .json and bvecs/bvals files if present at original location)
+# 0. Create subfolder structure in $datadir
+
+cd $datadir
+if [ ! -d anat ]; then mkdir -p anat; fi
+if [ ! -d dwi ]; then mkdir -p dwi; fi
+if [ ! -d fmap ]; then mkdir -p fmap; fi
+if [ ! -d xfm ]; then mkdir -p xfm; fi
+if [ ! -d qc ]; then mkdir -p qc; fi
+cd $currdir
+
+##################################################################################
+# 1. Creae dwi.mif.gz in $datadir/dwi/preproc and put b0AP.mif.gz b0PA.mif.gz in $datadir/dwi/preproc/topup
 
 if [ ! -d $datadir/dwi/preproc/topup ]; then mkdir -p $datadir/dwi/preproc/topup; fi
 
@@ -99,42 +115,42 @@ if [ -f $sessionfile ]; then
 	    QCPass=`echo "$line" | awk '{ print $4 }'`
 
 	    if [ $QCPass == 1 ]; then
-
-		# Get file name
+		
+		# Get file from column nbr 3
 		file=`echo "$line" | awk '{ print $3 }'`
 		filebase=`basename $file .nii.gz`
 		filedir=`dirname $file`
 
-		# Read flags in session.tsv file with corresponding column index
-		# DWI AP data
+		#### Read flags in session.tsv file with corresponding column index
+		## DWI AP data
 		dwiAP=`echo "$line" | awk '{ print $6 }'`
 		if [ $dwiAP == 1 ]; then		    
 		    if [ ! -f $datadir/dwi/preproc/dwi.mif.gz ]; then 
-			mrconvert $datadir/$filedir/$filebase.nii.gz \
-				  -json_import $datadir/$filedir/$filebase.json \
-				  -fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval  \
-				  $datadir/dwi/preproc/dwi.mif.gz
+			mrconvert -json_import $rawdatadir/$filedir/$filebase.json \
+				  -fslgrad $rawdatadir/$filedir/$filebase.bvec $rawdatadir/$filedir/$filebase.bval \
+				  $rawdatadir/$filedir/$filebase.nii.gz $datadir/dwi/preproc/dwi.mif.gz
 		    fi
 		fi		
-		# b0AP and b0PA data
+		## b0AP and b0PA data
 		volb0AP=`echo "$line" | awk '{ print $7 }'`
 		if [ ! $volb0AP == "-" ]; then
 		    if [ ! -f $datadir/dwi/preproc/b0AP.mif.gz ]; then
-			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0AP -axis 0,1,2 $datadir/dwi/preproc/topup/b0AP.mif.gz
+			mrconvert $rawdatadir/$filedir/$filebase.nii.gz -json_import $rawdatadir/$filedir/$filebase.json - | \
+			    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif.gz
 		    fi
 		fi
 		volb0PA=`echo "$line" | awk '{ print $8 }'`
 		if [ ! $volb0PA == "-" ]; then
 		    if [ ! -f $datadir/dwi/preproc/b0PA.mif.gz ]; then
-			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0PA -axis 0,1,2 $datadir/dwi/preproc/topup/b0PA.mif.gz
+			mrconvert $rawdatadir/$filedir/$filebase.nii.gz -json_import $rawdatadir/$filedir/$filebase.json $datadir/dwi/preproc/topup/b0PA.mif.gz
 		    fi
 		fi
+	    fi
+	    
 	done
-    } < "$sessionfile";
+    } < "$sessionfile"
 else
-    echo "No session.tsv file, using input or defaults"
+    echo "No session.tsv file, using input/defaults"
     filedir=`dirname $dwi`
     filebase=`basename $dwi .nii.gz`
     mrconvert $filedir/filebase.nii.gz \
@@ -145,7 +161,7 @@ fi
 
 
 ##################################################################################
-# 0b. Create dwi.mif.gz to work with in /preproc
+# 1b. Create b0APPA.mif.gz in $datadir/dwi/preproc/topup
 
 cd $datadir/dwi/preproc
 
@@ -153,20 +169,24 @@ if [ ! -d topup ]; then mkdir topup; fi
 
 # Create b0APPA.mif.gz to go into TOPUP
 if [ ! -f topup/b0APPA.mif.gz ]; then
-    if [ -f topup
-    echo "Create a PErevPE pair of SE images to use with TOPUP
-1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/dwi/preproc/topup
-2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
-3. Run this script again.    
+    if [ -f topup/b0AP.mif.gz ] && [ -f topup/b0PA.mif.gz ]; then
+	echo "Creating b0APPA.mif.gz from b0AP.mif.gz and b0PA.mif.gz"
+	mrcat topup/b0AP.mif.gz topup/b0PA.mif.gz topup/b0APPA.mif.gz
+    else
+	echo "No b0APPA.mif.gz or pair of b0AP.mif.gz and b0PA.mif.gz are present to use with TOPUP 
+	1. Do this by put one good b0 from dir-AP_dwi and dir-PA_dwi into a file b0APPA.mif.gz into $datadir/dwi/preproc/topup
+	2. The same b0 from dir-AP_dwi should be put 1st in the dir-AP_dwi dataset, as dwifslpreprocess will use the 1st b0 in dir-AP and replace the first b0 in b0APPA with
+	3. Run this script again.    
     	 "
-    exit;
+	exit;
+    fi
 fi
 
 cd $currdir
 
 
 ##################################################################################
-# 1. Do PCA-denoising and Remove Gibbs Ringing Artifacts
+# 2. Do PCA-denoising and Remove Gibbs Ringing Artifacts
 cd $datadir/dwi/preproc
 
 # Directory for QC files
@@ -197,27 +217,10 @@ fi
 cd $currdir
 
 ##################################################################################
-# 2. TOPUP and EDDY for Motion- and susceptibility distortion correction
-
-# Get relevant data from /orig for PErevPE estimation of fieldmap with TOPUP
-cd $datadir/dwi/preproc
-if [ ! -d topup ]; then mkdir topup; fi
-
-for file in $seAP $sePA $dwiAPsbref $dwiPAsbref $dwiPA; do
-    if [ ! -f topup/$file.mif.gz ]; then
-	mrconvert -json_import ../orig/$file.json ../orig/$file.nii.gz topup/$file.mif.gz
-    fi
-done
-
-cd $currdir
-
-# Work with b0 PErevPE fmap
-cd $datadir/dwi/preproc
-
-# Do Topup and Eddy with dwifslpreproc
+# 3. TOPUP and EDDY for Motion- and susceptibility distortion correction
+# Do Topup and Eddy with dwifslpreproc and use topup/b0APPA.mif.gz as SE-pair for TOPUP
 #
-# use b0APPA.mif.gz (i.e. choose the two best b0s - should be placed first in dwiAP and dwiPA
-#
+cd $datadir/dwi/preproc
 
 if [ ! -f dwi_den_unr_eddy.mif.gz ];then
     dwifslpreproc -se_epi topup/b0APPA.mif.gz -rpe_header -align_seepi \
@@ -230,6 +233,7 @@ if [ ! -f dwi_den_unr_eddy.mif.gz ];then
 		  dwi_den_unr_eddy.mif.gz;
     # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
 fi
+# Now cleanup by transferring relevant files to topup folder and deleting scratch folder 
 
 cd $currdir
 
@@ -248,7 +252,7 @@ if [ ! -f mask.mif.gz ]; then
     dwiextract -bzero $dwi.mif.gz - | mrmath -force -axis 3 - mean meanb0tmp.nii.gz
     bet meanb0tmp meanb0tmp_brain -m -f 0.25 -R #-f 0.25 from dHCP dMRI pipeline
     # Check result
-    mrview meanb0tmp.nii.gz -roi.load meanb0tmp_brain_mask.nii.gz -roi.opacity 0.5 -mode 2
+    # echo mrview meanb0tmp.nii.gz -roi.load meanb0tmp_brain_mask.nii.gz -roi.opacity 0.5 -mode 2
     mrconvert meanb0tmp_brain_mask.nii.gz mask.mif.gz
     rm meanb0tmp*
 fi
