@@ -222,18 +222,22 @@ cd $currdir
 #
 cd $datadir/dwi/preproc
 
+scratchdir=dwifslpreproc
+
 if [ ! -f dwi_den_unr_eddy.mif.gz ];then
     dwifslpreproc -se_epi topup/b0APPA.mif.gz -rpe_header -align_seepi \
 		  -nocleanup \
-		  -scratch dwifslpreproc \
+		  -scratch $scratchdir \
 		  -topup_options " --iout=field_mag_unwarped" \
 		  -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
-		  -eddyqc_all ../../qc \
+		  -eddyqc_all eddy \
 		  dwi_den_unr.mif.gz \
 		  dwi_den_unr_eddy.mif.gz;
     # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
 fi
-# Now cleanup by transferring relevant files to topup folder and deleting scratch folder 
+# Now cleanup by transferring relevant files to topup folder and deleting scratch folder
+mv $scratchdir/field_* $scratchdir/topup_* topup/.
+rm -rf $scratchdir 
 
 cd $currdir
 
@@ -282,20 +286,26 @@ mrconvert preproc/mask.mif.gz mask.mif.gz
 dwi=dwi_preproc
 
 # B0-normalisation
-if [ ! -f ${dwi}_norm.mif.gz ];then
+if [ ! -f ${dwi}_inorm.mif.gz ];then
     dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_inorm.mif.gz
 fi
 
 # Extract mean b0, b1000 and b2600
 for bvalue in 0 400 1000 2600; do
     bfile=meanb$bvalue
-    if [ ! -f $bfile.nii.gz ]; then
-	dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
-	mrcalc $bfile.mif.gz mask.mif.gz -mul ${bfile}_brain.mif.gz
+
+    if [ $bvalue == 0 ]; then
+	if [ ! -f $bfile.mif.gz]; then
+	    dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
+	fi
+    fi
+    
+    if [ ! -f ${bfile}_brain.mif.gz ]; then
+	dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean - | mrcalc - mask.mif.gz -mul ${bfile}_brain.mif.gz
 	#mrconvert $bfile.mif.gz $bfile.nii.gz
 	#mrconvert ${bfile}_brain.mif.gz ${bfile}_brain.nii.gz
-	echo "Visually check the ${bfile}_brain"
-	#mrview ${bfile}_brain.nii.gz -mode 2
+	echo "Visually check the ${bfile}_brain.mif.gz"
+	ech mrview ${bfile}_brain.mif.gz -mode 2
     fi
 done
 
