@@ -121,15 +121,14 @@ if [ -f $sessionfile ]; then
 
 	    if [ $QCPass == 1 ]; then
 		
-		# Get file from column nbr 3
-		file=`echo "$line" | awk '{ print $3 }'`
-		filebase=`basename $file .nii.gz`
-		filedir=`dirname $file`
-
 		#### Read flags in session.tsv file with corresponding column index
 		## Flag for use of sMRI in 5ttgen mcrib (sMRI_use_for_5ttgen_mcrib = 9th column)
 		sMRI_use_for_5ttgen_mcrib=`echo "$line" | awk '{ print $9 }'`
 		if [ $sMRI_use_for_5ttgen_mcrib == 1 ]; then
+			# Get file from column nbr 3
+			file=`echo "$line" | awk '{ print $3 }'`
+			filebase=`basename $file .nii.gz`
+			filedir=`dirname $file`
 		    let counter++
 		    if [ ! -f $datadir/anat/$filebase.mif.gz ]; then
 			cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/.
