@@ -153,7 +153,7 @@ else
     echo "No session.tsv file, using input/defaults"
     filedir=`dirname $dwi`
     filebase=`basename $dwi .nii.gz`
-    mrconvert $filedir/filebase.nii.gz \
+    mrconvert $filedir/$filebase.nii.gz \
 	      -json_import $filedir/$filebase.json \
 	      -fslgrad $filedir/$filebase.bvec $filedir/$filebase.bval  \
 	      $datadir/dwi/preproc/dwi.mif.gz
@@ -237,6 +237,7 @@ if [ ! -f dwi_den_unr_eddy.mif.gz ];then
 fi
 # Now cleanup by transferring relevant files to topup folder and deleting scratch folder
 mv eddy/quad ../../qc/.
+cp $scratchdir/command.txt $scratchdir/log.txt $scratchdir/eddy_*.txt $scratchdir/applytopup_*.txt eddy/.
 mv $scratchdir/field_* $scratchdir/topup_* topup/.
 rm -rf $scratchdir 
 
@@ -306,7 +307,7 @@ for bvalue in 0 400 1000 2600; do
 	#mrconvert $bfile.mif.gz $bfile.nii.gz
 	#mrconvert ${bfile}_brain.mif.gz ${bfile}_brain.nii.gz
 	echo "Visually check the ${bfile}_brain.mif.gz"
-	ech mrview ${bfile}_brain.mif.gz -mode 2
+	echo mrview ${bfile}_brain.mif.gz -mode 2
     fi
 done
 
