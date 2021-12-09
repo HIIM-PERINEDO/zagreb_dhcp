@@ -76,13 +76,13 @@ cd $rawdatadir/sub-$sID/ses-$ssID
 if [ ! -f session.tsv ]; then
     {
 	echo "Creating session.tsv file from $tsvfile"
-	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_dwiAP\tdMRI_vol_for_b0AP\tdMRI_vol_for_b0AP" > session.tsv
+	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_dwiAP\tdMRI_vol_for_b0AP\tdMRI_vol_for_b0AP\tsMRI_use_for_5ttgen_mcrib" > session.tsv
 
 	read;
 	while IFS= read -r line
 	do
 	    file=`echo "$line" | awk '{ print $1 }'`
-	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t\-\t\-\t\-" >> session.tsv
+	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t\-\t\-\t\-\t-" >> session.tsv
 	done
     } < "$tsvfile"
 fi 
