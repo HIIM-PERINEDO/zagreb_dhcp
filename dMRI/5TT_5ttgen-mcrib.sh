@@ -207,7 +207,7 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii.gz ]; then
 	   -nocleanup -scratch $scratchdir \
 	   -sgm_amyg_hipp \
 	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii.gz \
-	   sub-${sID}_ses-${ssID}_desc-restore_T2w.nii.gz sub-${sID}_ses-${ssID}_5TT.nii.gz t2w
+	   sub-${sID}_ses-${ssID}_desc-restore_T2w.nii.gz t2w sub-${sID}_ses-${ssID}_5TT.nii.gz
     # clean up
     # rm -rf $scratchdir
 fi
