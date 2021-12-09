@@ -93,3 +93,26 @@ dMRI_dir106_AP_2x2x2_SBRef	->	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_sbref.nii.gz
 dMRI_dir106_AP_2x2x2		->	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_dwi.nii.gz
 dMRI_dir106_PA_2x2x2_SBRef(2nd)	->	dwi/sub-PMR001_ses-MR2_dir-PA_run-2_sbref.nii.gz
 
+
+## Visual QC routine
+The rawdata is eye-balled to assess the quality of all images in the `/rawdata`
+
+This is implemented in the script `QC_visualise_rawdata.sh`.
+
+The script and generates tsv-file in rawdata/sub-sID/ses-ssID/session.tsv.
+### QC `/anat`
+
+Some of the images
+![image](https://user-images.githubusercontent.com/20419258/145401959-1ef76730-9231-4819-9331-a29d7e7b63ed.png)
+
+### QC `/dwi`
+
+SBRef seems to have a saturation problem and many/most of the contain difference between adjacent slice (bandlike pattern) which must be due difference pre-pulse loading between the interleaved slice-stacks  
+![image](https://user-images.githubusercontent.com/20419258/145405106-a936af6d-7509-41e2-95de-e45f8a8111be.png)
+
+When this artefact is apparent the entry in `session.tsv`is set to `qc_fail_pass = 0.5`
+
+### QC `/fmap`
+
+
+### QC `/func`
