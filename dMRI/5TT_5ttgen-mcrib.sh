@@ -203,7 +203,7 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii.gz ]; then
     5ttgen mcrib \
 	   -mask sub-${sID}_ses-${ssID}_desc-brain_mask.nii.gz \
 	   -mcrib_path $MCRIBpath \
-	   -ants_parallel 2 -cores $threads \
+	   -ants_parallel 2 -nthreads $threads \
 	   -nocleanup -scratch $scratchdir \
 	   -sgm_amyg_hipp \
 	   -parcellation sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii.gz \
