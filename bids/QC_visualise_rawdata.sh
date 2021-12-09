@@ -82,7 +82,7 @@ if [ ! -f session.tsv ]; then
 	while IFS= read -r line
 	do
 	    file=`echo "$line" | awk '{ print $1 }'`
-	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t\-\t\-\t\-\t-" >> session.tsv
+	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t-\t-\t-\t-" >> session.tsv
 	done
     } < "$tsvfile"
 fi 
