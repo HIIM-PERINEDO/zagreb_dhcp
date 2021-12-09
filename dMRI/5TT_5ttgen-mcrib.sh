@@ -21,6 +21,16 @@ Options:
   exit;
 }
 
+convertsecs() 
+{
+ ((h=${1}/3600))
+ ((m=(${1}%3600)/60))
+ ((s=${1}%60))
+ printf "%02d:%02d:%02d\n" $h $m $s
+}
+
+start=`date +%s`
+
 ################ ARGUMENTS ################
 
 [ $# -ge 2 ] || { usage; }
@@ -206,3 +216,9 @@ fi
 cd $currdir
 
 #######################################################################################
+
+end=`date +%s`
+runtime=$((end-start))
+TIME=$(convertsecs $runtime)
+echo "Total runtime = $TIME"
+
