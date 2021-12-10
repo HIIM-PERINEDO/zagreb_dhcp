@@ -237,7 +237,7 @@ if [ ! -f dwi_den_unr_eddy.mif.gz ];then
 fi
 # Now cleanup by transferring relevant files to topup folder and deleting scratch folder
 mv eddy/quad ../../qc/.
-cp $scratchdir/command.txt $scratchdir/log.txt $scratchdir/eddy_*.txt $scratchdir/applytopup_*.txt eddy/.
+cp $scratchdir/command.txt $scratchdir/log.txt $scratchdir/eddy_*.txt $scratchdir/applytopup_*.txt $scratchdir/slspec.txt eddy/.
 mv $scratchdir/field_* $scratchdir/topup_* topup/.
 rm -rf $scratchdir 
 
