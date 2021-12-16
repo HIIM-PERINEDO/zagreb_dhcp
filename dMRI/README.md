@@ -21,6 +21,7 @@ Run scripts in the following order:
 1. preprocess.sh
 2. neonatal-5TT (neonatal-5TT_DrawEM or neonatal-5TT_MCRIB)
 3. registration.sh
-4. csd.sh
-5. tractography.sh
-6. connectome.sh
+4. response.sh
+5. csd.sh
+6. tractography.sh
+7. connectome.sh
