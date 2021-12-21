@@ -58,6 +58,7 @@ Subject:       $sID
 Session:       $ssID
 DWI:	       $dwi
 Mask:	       $mask
+Response:      $response
 Directory:     $datadir 
 $BASH_SOURCE   $command
 ----------------------------"
@@ -80,20 +81,17 @@ echo
 for file in $dwi $mask; do
     origdir=`dirname $file`
     filebase=`basename $file .mif.gz`
-    if [[ $file = $act5tt ]];then
-	outdir=$datadir/dwi/act/$method-$atlas
-    else
-	outdir=$datadir/dwi
-    fi
-
+    outdir=$datadir/dwi
+    
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     
-    if [ ! -f $ourdir/$filebase.mif.gz ];then
+    if [ ! -f $outdir/$filebase.mif.gz ];then
 	cp $file $outdir/.
 	if [ -f $origdir/$filebase.json ];then
 	    cp $origdir/$filebase.json $outdir/.
 	fi
     fi
+
 done
 
 # Update variables to point at corresponding filebases in $datadir
@@ -105,33 +103,42 @@ mask=`basename $mask .mif.gz`
 
 cd $datadir/dwi
 
-# ---- Tournier ----
+## ---- Tournier ----
 if [[ $response = tournier ]]; then
+
     # response fcn
     responsedir=response #Becomes as sub-folder in $datadir/dwi
     if [ ! -d $responsedir ];then mkdir -p $responsedir;fi    
+
     if [ ! -f response/${response}_response.txt ]; then
 	echo "Estimating response function use $response method"
-	dwi2response tournier -force -mask  $mask.mif.gz -voxels $responsedir/${response}_sf.mif $dwi.mif.gz $responsedir/${response}_response.txt
-	echo Check results: response fcn and sf voxels
-	shview  response/${response}_response.txt
-	mrview  meanb0_brain.mif.gz -roi.load $responsedir/${response}_sf.mif -roi.opacity 0.5 -mode 2
+	dwi2response tournier -force -mask  $mask.mif.gz -voxels $responsedir/${response}_sf.mif.gz $dwi.mif.gz $responsedir/${response}_response.txt
     fi
+
+    echo Check results: response fcn and sf voxels
+    echo shview  response/${response}_response.txt
+    echo mrview  meanb0_brain.mif.gz -roi.load $responsedir/${response}_sf.mif.gz -roi.opacity 0.5 -mode 2
 fi
 
-# ---- dhollander ----
+
+## ---- dhollander ----
 if [[ $response = dhollander ]]; then
+    
     responsedir=response #Becomes as sub-folder in $datadir/dwi
-    if [ ! -d $responsedir ];then mkdir -p $responsedir; fi    
-    # Estimate dhollander msmt response functions (use FA < 0.10 according to Blesa et al Cereb Cortex 2021)
-    echo "Estimating response function use $response method"
-    dwi2response dhollander -force -mask $mask.mif.gz -voxels $responsedir/${response}_sf.mif -fa 0.1 $dwi.mif.gz $responsedir/${response}_wm.txt $responsedir/${response}_gm.txt $responsedir/${response}_csf.txt
-    echo "Check results for response fcns (wm, gm and csf) and single-fibre voxels (sf)"
-    shview  $responsedir/${response}_wm.txt
-    shview  $responsedir/${response}_gm.txt
-    shview  $responsedir/${response}_csf.txt
-    mrview  meanb0_brain.mif.gz -overlay.load $responsedir/${response}_sf.mif -overlay.opacity 0.5 -mode 2
-fi
+    if [ ! -d $responsedir ];then mkdir -p $responsedir; fi
 
+    if [ ! -f response/${response}_response.txt ]; then
+	# Estimate dhollander msmt response functions (use FA < 0.10 according to Blesa et al Cereb Cortex 2021)
+	echo "Estimating response function use $response method"
+	dwi2response dhollander -force -mask $mask.mif.gz -voxels $responsedir/${response}_sf.mif.gz -fa 0.1 $dwi.mif.gz $responsedir/${response}_wm.txt $responsedir/${response}_gm.txt $responsedir/${response}_csf.txt
+    fi
+    
+    echo "Check results for response fcns (wm, gm and csf) and single-fibre voxels (sf)"
+    echo shview  $responsedir/${response}_wm.txt
+    echo shview  $responsedir/${response}_gm.txt
+    echo shview  $responsedir/${response}_csf.txt
+    echo mrview  meanb0_brain.mif.gz -overlay.load $responsedir/${response}_sf.mif.gz -overlay.opacity 0.5 -mode 2
+    
+fi
 
 cd $currdir
