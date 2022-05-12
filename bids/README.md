@@ -1,3 +1,12 @@
+### Re-arrangement & Conversion of DCM to NIfTI and QC of rawdata NIfTI
+
+0. Re-arrangement of DCM data
+DCM data is downloaded from the SECTRA PACS system by exporting to media.
+The DCM images are not ordered in any eligible way, so a small script is re-naming the filenames and folder names
+`DoBDCM_to_sourcedataDCM.sh`
+
+2. Conversion of DCM data into BIDS NIfTI data
+
 This folder contains scripts that uses [heudiconv](https://heudiconv.readthedocs.io/en/latest/) to convert DICOMs into [BIDS-format](https://bids-specification.readthedocs.io/en/stable/)
 
 - DICOMs are expected to be in `$studyfolder/sourcedata`
@@ -8,7 +17,7 @@ BIDS format: https://bids-specification.readthedocs.io/en/stable/
 
 Heudiconv: https://heudiconv.readthedocs.io/en/latest/
 
-After BIDS conversion, the rawdata is inspected (launch the script `QC_visualise_rawdata.sh`)
+3. After BIDS conversion, the rawdata is inspected (launch the script `QC_visualise_rawdata.sh`)
 
 ## Scanning protocol 
 1. Head Scout
