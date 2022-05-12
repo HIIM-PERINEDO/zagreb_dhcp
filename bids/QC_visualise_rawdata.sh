@@ -76,7 +76,7 @@ cd $rawdatadir/sub-$sID/ses-$ssID
 if [ ! -f session_QC.tsv ]; then
     {
 	echo "Creating session_QC.tsv file from $tsvfile"
-	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_dwiAP\tdMRI_vol_for_b0AP\tdMRI_vol_for_b0PA\tsMRI_use_for_5ttgen_mcrib" > session.tsv
+	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_dwiAP\tdMRI_vol_for_b0AP\tdMRI_vol_for_b0PA\tsMRI_use_for_5ttgen_mcrib" > session_QC.tsv
 
 	read;
 	while IFS= read -r line
