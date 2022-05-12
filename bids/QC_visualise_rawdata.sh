@@ -1,7 +1,7 @@
 #!/bin/bash
 # Zagrep Collab dhcp
-# Script for QC eye-balling of images in a BIDS rawdata folder given from a heudiconv "session.tsv"-file
-# Creates a session.tsv file for QC purposes
+# Script for QC eye-balling of images in a BIDS rawdata folder given from a heudiconv's "session.tsv"-file
+# Creates a session_QC.tsv file for QC purposes
 #
 usage()
 {
@@ -72,23 +72,23 @@ done
 # Go to rawdata dir
 cd $rawdatadir/sub-$sID/ses-$ssID
 
-# Create $rawdatadir/sub-$sID/ses-$ssID/session.tsv file is not present
-if [ ! -f session.tsv ]; then
+# Create $rawdatadir/sub-$sID/ses-$ssID/session_QC.tsv file is not present
+if [ ! -f session_QC.tsv ]; then
     {
-	echo "Creating session.tsv file from $tsvfile"
+	echo "Creating session_QC.tsv file from $tsvfile"
 	echo -e "participant_id\tsession_id\tfilename\tqc_pass_fail\tqc_signature\tdMRI_dwiAP\tdMRI_vol_for_b0AP\tdMRI_vol_for_b0PA\tsMRI_use_for_5ttgen_mcrib" > session.tsv
 
 	read;
 	while IFS= read -r line
 	do
 	    file=`echo "$line" | awk '{ print $1 }'`
-	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t-\t-\t-\t-" >> session.tsv
+	    echo -e "sub-$sID\tses-$ssID\t$file\t0/1\tFL/JB\t-\t-\t-\t-" >> session_QC.tsv
 	done
     } < "$tsvfile"
 fi 
 
 # Eye-ball data in session.tsv 
-echo "QC eye-balling of BIDS rawdata given by session.tsv file"
+echo "QC eye-balling of BIDS rawdata given by session_QC.tsv file"
 # Read input file line by line, but skip first line
 {
     read;
@@ -105,6 +105,6 @@ echo "QC eye-balling of BIDS rawdata given by session.tsv file"
 	fi
         let counter++
     done
-} < session.tsv
+} < session_QC.tsv
 
 cd $studydir
