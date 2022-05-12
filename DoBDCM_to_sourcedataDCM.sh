@@ -1,18 +1,19 @@
 #!/bin/bash
 # Zagreb_Collab
 #
-# Simple script to put patient in DoB-folder in PMR-folder by using dcm2niix
+# Simple script to put patient DCMs in DoB-folder into sourcedata by using dcm2niix.
+# Data is copied and with file and folder names rearranged and renamed
 #
 # Input:
-# $1 = PMR-folder
-# $2 = DoB-folder
-# $3 = Patient (assumed to be in the in the format PMR$SubjectID_$SessionID_DoB...)
+# $1 = sourcedata-folder (e.g. sourcedata) 
+# $2 = DoB-folder (e.g. DICOM_DoB)
+# $3 = Patient (assumed to be in the in the format PMR$SubjectID_$SessionID_DoBYYYYMMDD or PK$SubjectID_$SessionID_DoBYYYYMMDD)
 # (optional) $4 = SubjectID (i.e. number PMRXYZ, e.g. PMR343)
 # (optional) $5 = SessionID (e.g. MR2)
 #
 # Output:
 # Patient DCM-folder in PMR-folder organized in BIDS
-# PMR-folder
+# sourcedata-folder
 #  |
 #  -- subj-$SubjectID
 #      |
