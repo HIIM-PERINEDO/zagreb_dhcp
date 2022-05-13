@@ -19,9 +19,9 @@ Essentially follows the [BATMAN tutorial](https://osf.io/pm9ba/)
 Run scripts in the following order:
 
 1. preprocess.sh
-2. neonatal-5TT (neonatal-5TT_DrawEM or neonatal-5TT_MCRIB)
-3. registration.sh
-4. response.sh
-5. csd.sh
+2. response.sh
+3. csd.sh
+4. neonatal-5TT (neonatal-5TT_DrawEM or neonatal-5TT_MCRIB)
+5. registration.sh
 6. tractography.sh
 7. connectome.sh
