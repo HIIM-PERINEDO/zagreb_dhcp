@@ -1,33 +1,37 @@
 #!/bin/bash
 # Zagreb_Collab
 #
-# Simple script to put patient DCMs in DoB-folder into sourcedata by using dcm2niix.
-# Data is copied and with file and folder names rearranged and renamed
-#
-# Input:
-# $1 = sourcedata-folder (e.g. sourcedata) 
-# $2 = DoB-folder (e.g. DICOM_DoB)
-# $3 = Patient (assumed to be in the in the format PMR$SubjectID_$SessionID_DoBYYYYMMDD or PK$SubjectID_$SessionID_DoBYYYYMMDD)
-# (optional) $4 = SubjectID (i.e. number PMRXYZ, e.g. PMR343)
-# (optional) $5 = SessionID (e.g. MR2)
-#
-# Output:
-# Patient DCM-folder in PMR-folder organized in BIDS
-# sourcedata-folder
-#  |
-#  -- subj-$SubjectID
-#      |
-#      -- ses-$SessionID
-#          |
-#          --DCM-folders for each Series
-#
+usage()
+{
+  base=$(basename "$0")
+  echo "usage: $base patient [options]
+Simple script to put patient DCMs in DoB-folder into sourcedata folder using dcm2niix.
+sourcedata-folder
+ |
+ -- subj-$SubjectID
+     |
+     -- ses-$SessionID
+         |
+         --DCM-folders for each Series
+Data is copied and with file and folder names rearranged and renamed.
 
-# START
+Arguments:
+  patient			Patient's DoBDCM-folder in format PMR/PK$SubjectID_$SessionID_DoBYYYYMMDD (e.g. PMR002_MR2_YYYYMMDD or PK340_MR2_YYYYMMDD) 
+Options:
+  -sourcedata			Output sourcedata folder (default: sourcedata)
+  -DoBDCM		       	Input DCM-folder (default: DICOM_DoB)
+  -h / -help / --help           Print usage.
+"
+  exit;
+}
 
-#Input/s
-PMRfolder=$1;
-DoBfolder=$2;
-Patient=$3
+################ ARGUMENTS ################
+
+[ $# -ge 1 ] || { usage; }
+command=$@
+Patient=$1
+shift
+
 if [ $# -gt 3 ]; then
     SubjectID=$4;
     SessionID=$5;
@@ -35,7 +39,26 @@ else
     SubjectID=`echo "$Patient" | sed 's/\_/\ /g' | awk '{print $1}'`;
     SessionID=`echo "$Patient" | sed 's/\_/\ /g' | awk '{print $2}'`;
 fi
-echo
+
+# Defaults
+studydir=$PWD
+PMRfolder=$studydir/sourcedata;
+DoBfolder=$studydir/DICOM_DoB;
+
+# Read arguments
+while [ $# -gt 0 ]; do
+    case "$1" in
+	-sourcedata)  shift; PMRfolder=$1; ;;
+	-DoBDCM) shift; DoBfolder=$1; ;;
+	-h|-help|--help) usage; ;;
+	-*) echo "$0: Unrecognized option $1" >&2; usage; ;;
+	*) break ;;
+    esac
+    shift
+done
+
+################ START ################
+
 echo Transferring $Patient from DoB-folder $DoBfolder to PMR-folder $PMRfolder;
 echo SubjectID = $SubjectID
 echo SessionID = $SessionID;
