@@ -2,14 +2,11 @@
 
 ## 0. Re-arrangement of DCM data
 
-DCM data is downloaded from the SECTRA PACS system by "Exporting to media" 
-
-The downloaded DMCs should be stored the in a folder in `$studyfolder/DICOM_DoB/"study_id"_"session"_DoB"YYYYMMDD"`
-
+1. DCM data is downloaded from the SECTRA PACS system by "Exporting to media"  \
+The downloaded DMCs should be stored the in a folder in `$studyfolder/DICOM_DoB/"study_id"_"session"_DoB"YYYYMMDD"` \
 E.g. `$studyfolder/DICOM_DoB/PMR000_MR2_DoB20001201`
 
-The DCM images are not ordered in any eligible way, so the small script `DoBDCM_to_sourcedataDCM.sh` is run which is re-names the filenames and folder names in a more eligible way into `sourcedata`
-
+2. The DCM images are not ordered in any eligible way, so the small script `DoBDCM_to_sourcedataDCM.sh` is run which re-names the folders and files in a more eligible way into `sourcedata`\
 E.g. `$studyfolder/DICOM_DoB/PMR000_MR2_DoB20001201` => `$studyfolder/sourcedata/sub-PMR000/ses-MR2/...` 
 
 ## 1. Conversion of DCM data into BIDS NIfTI data
@@ -19,10 +16,6 @@ The conversion is done with the script `sourcedataDCM_to_rawdataBIDS.sh` which u
 - DICOMs are expected to be in `$studyfolder/sourcedata`
 - Heuristics-files are located in code-subfolder `$codefolder/bids/heudiconv_heuristics`
 - NIfTIs are written into a BIDS-organised folder `$studyfolder/rawdata`
-
-BIDS format: https://bids-specification.readthedocs.io/en/stable/
-
-Heudiconv: https://heudiconv.readthedocs.io/en/latest/
 
 ## 2. Visual inspection of rawdata image quality 
 
