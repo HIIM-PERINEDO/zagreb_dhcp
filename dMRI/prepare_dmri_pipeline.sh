@@ -14,13 +14,14 @@ $datadir
 	/qc
 	/xfm
 	/logs
-and copies the relevant files (often given by session.tsv file) into subfolder /orig in /dwi, /anat and /fmap 
+copies the relevant files (often given by images which have passed QC logged in session_QC.tsv file) into subfolder /orig in /dwi, /anat and /fmap
+Also copies the session.tsv (if present rawdata/sub-$sID/ses-$ssID) into $datadir
 
 Arguments:
   sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -s / session-file		session.tsv that list files in rawdata/sub-sID/ses-ssID that should be used! Overrides options below (default: rawdata/sub-sID/ses-ssID/session.tsv)
+  -s / session-file		session.tsv that list files in rawdata/sub-sID/ses-ssID that should be used! Overrides options below (default: rawdata/sub-sID/ses-ssID/session_QC.tsv)
   -dwi				dMRI AP data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
   -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_sbref.nii.gz)
   -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-dwi_dir-PA_run-1_epi.nii.gz)
@@ -50,7 +51,7 @@ dwiPAsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_sb
 seAP=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_run-1_epi.nii.gz
 sePA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_run-1_epi.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-sessionfile=rawdata/sub-$sID/ses-$ssID/session.tsv
+sessionfile=rawdata/sub-$sID/ses-$ssID/session_QC.tsv
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -88,6 +89,7 @@ if [ ! $sessionfile == "" ]; then
     Session:           $ssID
     Session file:      $sessionfile
     Data directory:    $datadir 
+
     $BASH_SOURCE       $command
     ----------------------------"
 else
@@ -102,6 +104,7 @@ else
     SE fMAP (AP):  	$seAP	       
     SE fMAP (PA):  	$sePA	       
     Directory:     	$datadir 
+
     $BASH_SOURCE   	$command
     ----------------------------"
 fi
@@ -134,42 +137,58 @@ cd $currdir
 # 0. Copy to files to $datadir (incl .json and bvecs/bvals files if present at original location)
 
 if [ -f $sessionfile ]; then
-    # Use files listed in "session.tsv" file, which refer to session in BIDS rawdata directory
+    # Use files listed in "session.tsv" file, which refer to file on session level in BIDS rawdata directory
     rawdatadir=rawdata/sub-$sID/ses-$ssID
-    # Read $sessionfile, copy files and meanwhile create a local session.tsv in $datadir 
+    # Read $sessionfile, copy files and meanwhile create a local session_QC.tsv in $datadir
+    echo "Transfer data in $sessionfile which has qc_pass_fail = 1 or 0.5"
     {
 	linecounter=1	
 	while IFS= read -r line
 	do
-	      if [ $linecounter == 1 ] && [ ! -f $datadir/session.tsv ]; then
-		  echo $line > $datadir/session.tsv;
+	      if [ $linecounter == 1 ] && [ ! -f $datadir/session_QC.tsv ]; then
+		  echo $line > $datadir/session_QC.tsv;
 	      fi
-	      # check if the file/image has passed QC (qc_pass_fail = fourth column)
+	      # check if the file/image has passed QC (qc_pass_fail = fourth column) (1 or 0.5)
 	      QCPass=`echo "$line" | awk '{ print $4 }'`
-	      if [ $QCPass == 1 ]; then
+	      if [[ $QCPass == 1 || $QCPass == 0.5 ]]; then
 		  file=`echo "$line" | awk '{ print $3 }'`
 		  filebase=`basename $file .nii.gz`
 		  filedir=`dirname $file`
 		  case $filedir in
 		      anat)
-			  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session.tsv
+			  if [ ! -f $datadir/anat/orig/$filebase.nii.gz ]; then 
+			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/orig/.
+			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  fi
 			  ;;
 		      dwi)
-		    	  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session.tsv
+			  if [ ! -f $datadir/anat/dwi/$filebase.nii.gz ]; then 
+		    	      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
+			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  fi
 			  ;;		      
 		      fmap)
-			  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/fmap/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session.tsv
+			  if [ ! -f $datadir/anat/fmap/$filebase.nii.gz ]; then 
+			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/fmap/orig/.
+			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  fi
 			  ;;
 		  esac
 	      fi
 	      let linecounter++
 	done
     } < "$sessionfile";
+    
+    # Copy session.tsv file from $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv  
+    if [ ! -f $datadir/session.tsv ] && [ -f $rawdatadir/sub-$sID/ses-$ssID/session.tsv ]; then
+	echo "Copying $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv";
+	cp $rawdatadir/sub-$sID/ses-$ssID/session.tsv $datadir/session.tsv;
+    else
+	echo "No need/no file to transfer $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv";
+    fi
+    
 else
-    # no session.tsv file, so use files from input
+    # no session_QC.tsv file, so use files from input
     filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
     for file in $filelist; do
 	filebase=`basename $file .nii.gz`;
@@ -181,3 +200,8 @@ else
 	fi	
     done
 fi
+
+##################################################################################
+
+
+

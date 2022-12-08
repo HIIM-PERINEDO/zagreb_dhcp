@@ -96,22 +96,22 @@ def infotodict(seqinfo):
         # ANATOMY
         # 3D T1w
         if ('t1_mprage_sag' in s.protocol_name) and ('NORM' in s.image_type): # takes normalized images:
-            info[t1wmprage] = [s.series_id] # assign if a single series meets criteria   
+            info[t1wmprage].append(s.series_id) # append if multiple series meet criteria   
         # T2w Ax MCRIB
         if ('t2_tse_tra_1mm' in s.protocol_name) and ('MCRIB' in s.protocol_name): 
-            info[t2w] = [s.series_id] # assign if a single series meets
+            info[t2w].append(s.series_id) # assign if a single series meets
         # 3D T2w
         if ('t2_space_sag' in s.protocol_name) and ('NORM' in s.image_type): # takes normalized images
-            info[t2wspc] = [s.series_id] # assign if a single series meets criteria
+            info[t2wspc].append(s.series_id) # append if multiple series meet criteria
         # T2w Ax
         if ('t2_qtse_tra' in s.protocol_name): 
-            info[t2wtraclin] = [s.series_id] # assign if a single series meets
+            info[t2wtraclin].append(s.series_id) # assign if a single series meets
         # T2w Cor
         if ('t2_qtse_cor' in s.protocol_name): 
-            info[t2wcorclin] = [s.series_id] # assign if a single series meets criteria
+            info[t2wcorclin].append(s.series_id) # append if multiple series meet criteria
         # FLAIR
         if ('t2_space_dark-fluid_sag' in s.protocol_name) and ('NORM' in s.image_type): # takes normalized images
-            info[flair] = [s.series_id] # assign if a single series meets criteria
+            info[flair].append(s.series_id) # append if multiple series meet criteria
         
         # DIFFUSION
         # dir AP

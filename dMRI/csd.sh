@@ -82,7 +82,6 @@ for file in $dwi $mask; do
     origdir=`dirname $file`
     filebase=`basename $file .mif.gz`
     outdir=$datadir/dwi
-    fi
 
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     

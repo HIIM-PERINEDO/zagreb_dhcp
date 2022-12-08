@@ -4,7 +4,7 @@
 usage()
 {
   base=$(basename "$0")
-  echo "usage: $base subjectID sessionID age neonatal-segmentation-directory [options]
+  echo "usage: $base subjectID sessionID [options]
 Script to do M-CRIB neonatal-5TT (follows: https://git.ecdf.ed.ac.uk/jbrl/neonatal-5TT)
 
 Arguments:

@@ -127,7 +127,7 @@ if [[ $response = dhollander ]]; then
     responsedir=response #Becomes as sub-folder in $datadir/dwi
     if [ ! -d $responsedir ];then mkdir -p $responsedir; fi
 
-    if [ ! -f response/${response}_response.txt ]; then
+    if [ ! -f $responsedir/${response}_response.txt ]; then
 	# Estimate dhollander msmt response functions (use FA < 0.10 according to Blesa et al Cereb Cortex 2021)
 	echo "Estimating response function use $response method"
 	dwi2response dhollander -force -mask $mask.mif.gz -voxels $responsedir/${response}_sf.mif.gz -fa 0.1 $dwi.mif.gz $responsedir/${response}_wm.txt $responsedir/${response}_gm.txt $responsedir/${response}_csf.txt
