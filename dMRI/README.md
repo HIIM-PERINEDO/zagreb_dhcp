@@ -1,23 +1,26 @@
-### Data organisation
+## Data organisation
 
 Data is organised with inspiration/accordning to FSL eddy pipeline in the [3rd dHCP data release](https://biomedia.github.io/dHCP-release-notes/structure.html#diffusion-eddy-pipeline).
 
-derivatives/dMRI \
-	└── sub-PMR001 \
-    	    └── ses-MR2 \
-            	├── anat \
-        	├── dwi \
-        	├── fmap \
-        	├── qc \
+E.g. in the case of session MR2 of PMR001 
+```
+derivatives/dMRI 
+	└── sub-PMR001 
+    	    └── ses-MR2 
+            	├── anat 
+        	├── dwi 
+        	├── fmap 
+        	├── qc 
         	└── xfm 
+```
 
-
-### Processing pipeline
+## Processing
 
 Essentially follows the [BATMAN tutorial](https://osf.io/pm9ba/)
 
 Run scripts in the following order:
 
+0. prepare_dmri_pipeline.sh
 1. preprocess.sh
 2. response.sh
 3. csd.sh
