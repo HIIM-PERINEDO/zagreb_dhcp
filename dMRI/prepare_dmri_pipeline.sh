@@ -153,22 +153,37 @@ if [ -f $sessionfile ]; then
 		  filedir=`dirname $file`
 		  case $filedir in
 		      anat)
-			  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  if [ ! -f $datadir/anat/orig/$filebase.nii.gz ]; then 
+			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/orig/.
+			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  fi
 			  ;;
 		      dwi)
-		    	  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  if [ ! -f $datadir/anat/dwi/$filebase.nii.gz ]; then 
+		    	      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
+			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  fi
 			  ;;		      
 		      fmap)
-			  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/fmap/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  if [ ! -f $datadir/anat/fmap/$filebase.nii.gz ]; then 
+			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/fmap/orig/.
+			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			  fi
 			  ;;
 		  esac
 	      fi
 	      let linecounter++
 	done
     } < "$sessionfile";
+    
+    # Copy session.tsv file from $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv  
+    if [ ! -f $datadir/session.tsv ] && [ -f $rawdatadir/sub-$sID/ses-$ssID/session.tsv ]; then
+	echo "Copying $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv";
+	cp $rawdatadir/sub-$sID/ses-$ssID/session.tsv $datadir/session.tsv;
+    else
+	echo "No need/no file to transfer $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv";
+    fi
+    
 else
     # no session_QC.tsv file, so use files from input
     filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
@@ -183,5 +198,7 @@ else
     done
 fi
 
-if [ ! -f $datadir/session.tsv ]; then
-fi
+##################################################################################
+
+
+
