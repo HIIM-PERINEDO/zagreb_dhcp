@@ -89,6 +89,7 @@ if [ ! $sessionfile == "" ]; then
     Session:           $ssID
     Session file:      $sessionfile
     Data directory:    $datadir 
+
     $BASH_SOURCE       $command
     ----------------------------"
 else
@@ -103,6 +104,7 @@ else
     SE fMAP (AP):  	$seAP	       
     SE fMAP (PA):  	$sePA	       
     Directory:     	$datadir 
+
     $BASH_SOURCE   	$command
     ----------------------------"
 fi
@@ -135,9 +137,10 @@ cd $currdir
 # 0. Copy to files to $datadir (incl .json and bvecs/bvals files if present at original location)
 
 if [ -f $sessionfile ]; then
-    # Use files listed in "session.tsv" file, which refer to session in BIDS rawdata directory
+    # Use files listed in "session.tsv" file, which refer to file on session level in BIDS rawdata directory
     rawdatadir=rawdata/sub-$sID/ses-$ssID
-    # Read $sessionfile, copy files and meanwhile create a local session.tsv in $datadir 
+    # Read $sessionfile, copy files and meanwhile create a local session_QC.tsv in $datadir
+    echo "Transfer data in $sessionfile which has qc_pass_fail = 1 or 0.5"
     {
 	linecounter=1	
 	while IFS= read -r line
