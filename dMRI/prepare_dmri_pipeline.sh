@@ -15,7 +15,7 @@ $datadir
 	/xfm
 	/logs
 copies the relevant files (often given by images which have passed QC logged in session_QC.tsv file) into subfolder /orig in /dwi, /anat and /fmap
-Also copies the session.tsv (if present rawdata/sub-$sID/ses-$ssID)
+Also copies the session.tsv (if present rawdata/sub-$sID/ses-$ssID) into $datadir
 
 Arguments:
   sID				Subject ID (e.g. PMR001) 
@@ -181,4 +181,7 @@ else
 	    cp $file $filedir/$filebase.json $datadir/fmap/orig/.
 	fi	
     done
+fi
+
+if [ ! -f $datadir/session.tsv ]; then
 fi
