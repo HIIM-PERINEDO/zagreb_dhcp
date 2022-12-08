@@ -145,9 +145,9 @@ if [ -f $sessionfile ]; then
 	      if [ $linecounter == 1 ] && [ ! -f $datadir/session_QC.tsv ]; then
 		  echo $line > $datadir/session_QC.tsv;
 	      fi
-	      # check if the file/image has passed QC (qc_pass_fail = fourth column)
+	      # check if the file/image has passed QC (qc_pass_fail = fourth column) (1 or 0.5)
 	      QCPass=`echo "$line" | awk '{ print $4 }'`
-	      if [ $QCPass == 1 ]; then
+	      if [[ $QCPass == 1 || $QCPass == 0.5 ]]; then
 		  file=`echo "$line" | awk '{ print $3 }'`
 		  filebase=`basename $file .nii.gz`
 		  filedir=`dirname $file`
