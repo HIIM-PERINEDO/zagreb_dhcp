@@ -14,13 +14,14 @@ $datadir
 	/qc
 	/xfm
 	/logs
-and copies the relevant files (often given by session.tsv file) into subfolder /orig in /dwi, /anat and /fmap 
+copies the relevant files (often given by images which have passed QC logged in session_QC.tsv file) into subfolder /orig in /dwi, /anat and /fmap
+Also copies the session.tsv (if present rawdata/sub-$sID/ses-$ssID)
 
 Arguments:
   sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -s / session-file		session.tsv that list files in rawdata/sub-sID/ses-ssID that should be used! Overrides options below (default: rawdata/sub-sID/ses-ssID/session.tsv)
+  -s / session-file		session.tsv that list files in rawdata/sub-sID/ses-ssID that should be used! Overrides options below (default: rawdata/sub-sID/ses-ssID/session_QC.tsv)
   -dwi				dMRI AP data (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
   -dwiAPsbref			dMRI AP SBRef, potentially for registration and  TOPUP  (default: rawdata/sub-sID/ses-ssID/dwi/sub-sID_ses-ssID_dir-AP_run-1_sbref.nii.gz)
   -dwiPA			dMRI PA data, potentially for TOPUP  (default: rawdata/sub-sID/ses-ssID/fmap/sub-sID_ses-ssID_acq-dwi_dir-PA_run-1_epi.nii.gz)
@@ -50,7 +51,7 @@ dwiPAsbref=rawdata/sub-$sID/ses-$ssID/dwi/sub-${sID}_ses-${ssID}_dir-PA_run-1_sb
 seAP=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-AP_run-1_epi.nii.gz
 sePA=rawdata/sub-$sID/ses-$ssID/fmap/sub-${sID}_ses-${ssID}_acq-se_dir-PA_run-1_epi.nii.gz
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-sessionfile=rawdata/sub-$sID/ses-$ssID/session.tsv
+sessionfile=rawdata/sub-$sID/ses-$ssID/session_QC.tsv
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -141,8 +142,8 @@ if [ -f $sessionfile ]; then
 	linecounter=1	
 	while IFS= read -r line
 	do
-	      if [ $linecounter == 1 ] && [ ! -f $datadir/session.tsv ]; then
-		  echo $line > $datadir/session.tsv;
+	      if [ $linecounter == 1 ] && [ ! -f $datadir/session_QC.tsv ]; then
+		  echo $line > $datadir/session_QC.tsv;
 	      fi
 	      # check if the file/image has passed QC (qc_pass_fail = fourth column)
 	      QCPass=`echo "$line" | awk '{ print $4 }'`
@@ -153,15 +154,15 @@ if [ -f $sessionfile ]; then
 		  case $filedir in
 		      anat)
 			  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session.tsv
+			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
 			  ;;
 		      dwi)
 		    	  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session.tsv
+			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
 			  ;;		      
 		      fmap)
 			  cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/fmap/orig/.
-			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session.tsv
+			  echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
 			  ;;
 		  esac
 	      fi
@@ -169,7 +170,7 @@ if [ -f $sessionfile ]; then
 	done
     } < "$sessionfile";
 else
-    # no session.tsv file, so use files from input
+    # no session_QC.tsv file, so use files from input
     filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
     for file in $filelist; do
 	filebase=`basename $file .nii.gz`;
