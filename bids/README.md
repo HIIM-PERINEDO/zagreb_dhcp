@@ -21,7 +21,7 @@ The conversion is done with the script `sourcedataDCM_to_rawdataBIDS.sh` which u
 
 After BIDS conversion, the rawdata is visually inspected to detect bad imaging data.
 
-## 1. Eye-balling of BIDS data 
+## Eye-balling of BIDS data and QC book keeping 
 Launch the script `QC_visualise_rawdata.sh` and eye-ball all the images in the BIDS-rawdata folder as listed in the file `rawdata/sub-sID/ses-ssID/sub-$sID_ses-$ssID_scans.tsv`.
 
 The script creates a file `rawdata/sub-sID/ses-ssID/session_QC.tsv` which should be used for QC book keeping.
