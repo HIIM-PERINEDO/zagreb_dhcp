@@ -1,7 +1,7 @@
 #!/bin/bash
 # Zagrep Collab dhcp
-# Script for QC eye-balling of images in a BIDS rawdata folder given from a heudiconv's "session.tsv"-file
-# Creates a session_QC.tsv file for QC purposes
+# Script for QC eye-balling of images in a BIDS rawdata folder given from a heudiconv's "scans.tsv"-file
+# Creates (unless already present) a session_QC.tsv file for QC purposes
 #
 usage()
 {
@@ -12,7 +12,7 @@ Arguments:
   sID				Subject ID (e.g. PMR002) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -f / -tsv_file		Session.tsv file containing Heuristic file to use with heudiconv (default: $studydir/rawdata/sub-\$sID/ses-\$ssID/sub-\$sID/ses-\$ssID_scans.tsv)
+  -f / -tsv_file		File with scans to visualise (default: $studydir/rawdata/sub-\$sID/ses-\$ssID/sub-\$sID/ses-\$ssID_scans.tsv)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -92,7 +92,7 @@ echo "QC eye-balling of BIDS rawdata given by session_QC.tsv file"
 # Read input file line by line, but skip first line
 {
     read;
-    counter=2; #Keeps track of line number to display on I/O to make it easier to detect corresponding line in session.tsv file
+    counter=2; #Keeps track of line number to display on I/O to make it easier to detect corresponding line in session_QC.tsv file
     while IFS= read -r line
     do
 	file=`echo "$line" | awk '{ print $3 }'`

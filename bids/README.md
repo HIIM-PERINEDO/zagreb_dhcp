@@ -21,7 +21,7 @@ The conversion is done with the script `sourcedataDCM_to_rawdataBIDS.sh` which u
 
 After BIDS conversion, the rawdata is visually inspected to detect bad imaging data.
 
-## 1. Eye-balling of BIDS data 
+## Eye-balling of BIDS data and QC book keeping 
 Launch the script `QC_visualise_rawdata.sh` and eye-ball all the images in the BIDS-rawdata folder as listed in the file `rawdata/sub-sID/ses-ssID/sub-$sID_ses-$ssID_scans.tsv`.
 
 The script creates a file `rawdata/sub-sID/ses-ssID/session_QC.tsv` which should be used for QC book keeping.
@@ -53,11 +53,10 @@ sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_dwi.nii.gz	1	FL	1	0	-	-
 sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-PA_run-2_sbref.nii.gz	0FL	-	-	-	-
 sub-PMR001	ses-MR2	fmap/sub-PMR001_ses-MR2_acq-dwi_dir-PA_run-2_epi.nii.gz1FL	-	-
 ```
-# Generation av tsv-files
-particpants.tsv
-session.tsv
-
-TBC
+# Generation of tsv-files
+Taking inspiration from [3rd data release - info on participant and session tsv-files](https://biomedia.github.io/dHCP-release-notes/structure.html#participants-and-sessions), we use two python scripts to create similar tsv-files in `/rawdata`: 
+- particpants_updated.tsv is created on group level with clinical information for the study's spreedsheet
+- TBC session.tsv is created on session-level
 
 # MRI protocol and BIDS conversion rules
 ## Scanning protocol 
