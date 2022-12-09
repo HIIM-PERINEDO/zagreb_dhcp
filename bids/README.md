@@ -26,7 +26,11 @@ Launch the script `QC_visualise_rawdata.sh` and eye-ball all the images in the B
 
 The script creates a file `rawdata/sub-sID/ses-ssID/session_QC.tsv` which should be used for QC book keeping.
 
-In this tab-seperated file, all NIfTI images in are judged for overall images quality given by `qc_pass_fail = 1 (pass), 0.5 (borderline/unclear), 0 (fail)`. Additional informationen for processing can be be stored, e.g. which dMRI_dwiAP sequence to use and what b0 to use for TOPUP.
+In this tab-seperated file, all NIfTI images in are judged for overall images quality given by `qc_pass_fail: = 1 (pass), 0.5 (borderline/unclear), 0 (fail)`. Additional informationen for processing can be be stored. Currently we use 
+- dMRI_dwiAP: 1 indicates that this is the dwiAP sequences to use (in case of re-runs)
+- dMRI_vol_for_b0AP: the (dir-AP) b0 volume in dwiAP that can be used for fmap estimation with TOPUP.
+- dMRI_vol_for_b0PA: the (dir-PA) b0 volume in dwiPA (only b0s!, and currently only one, i.e. 3D file) that can be used for fmap estimation with TOPUP.
+- sMRI_use_for_5ttgen_mcrib: 1 indicates the acq-SPC T2w that should be used in the project for 5TT generation from Edinbourgh styled T2 SPACE (PK_PMR project)
 
 One example (note that proper tab-separation exists between columns).
 ```
