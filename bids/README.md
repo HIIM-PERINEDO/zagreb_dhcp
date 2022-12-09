@@ -53,11 +53,10 @@ sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_dwi.nii.gz	1	FL	1	0	-	-
 sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-PA_run-2_sbref.nii.gz	0FL	-	-	-	-
 sub-PMR001	ses-MR2	fmap/sub-PMR001_ses-MR2_acq-dwi_dir-PA_run-2_epi.nii.gz1FL	-	-
 ```
-# Generation av tsv-files
-particpants.tsv
-session.tsv
-
-TBC
+# Generation of tsv-files
+Taking inspiration from [3rd data release - info on participant and session tsv-files](https://biomedia.github.io/dHCP-release-notes/structure.html#participants-and-sessions), we use two python scripts to create similar tsv-files in `/rawdata`: 
+- particpants_updated.tsv is created on group level with clinical information for the study's spreedsheet
+- TBC session.tsv is created on session-level
 
 # MRI protocol and BIDS conversion rules
 ## Scanning protocol 
