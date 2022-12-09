@@ -1,4 +1,4 @@
-### Re-arrangement & Conversion of DCM to NIfTI and QC of rawdata NIfTI
+# Re-arrangement & Conversion of DCM to NIfTI and QC of rawdata NIfTI
 
 ## 0. Re-arrangement of DCM data
 
@@ -17,16 +17,52 @@ The conversion is done with the script `sourcedataDCM_to_rawdataBIDS.sh` which u
 - Heuristics-files are located in code-subfolder `$codefolder/bids/heudiconv_heuristics`
 - NIfTIs are written into a BIDS-organised folder `$studyfolder/rawdata`
 
-## 2. Visual inspection of rawdata image quality 
+# Visual inspection of rawdata image quality 
 
 After BIDS conversion, the rawdata is visually inspected to detect bad imaging data.
 
-Launch the script `QC_visualise_rawdata.sh` and eye-ball all the images in the BIDS-rawdata folder as listed in the file `rawdata/sub-sID/ses-ssID/session.tsv`.
+## 1. Eye-balling of BIDS data 
+Launch the script `QC_visualise_rawdata.sh` and eye-ball all the images in the BIDS-rawdata folder as listed in the file `rawdata/sub-sID/ses-ssID/sub-$sID_ses-$ssID_scans.tsv`.
 
 The script creates a file `rawdata/sub-sID/ses-ssID/session_QC.tsv` which should be used for QC book keeping.
 
+In this tab-seperated file, all NIfTI images in are judged for overall images quality given by `qc_pass_fail: = 1 (pass), 0.5 (borderline/unclear), 0 (fail)`. Additional informationen for processing can be be stored. Currently we use 
+- dMRI_dwiAP: 1 indicates that this is the dwiAP sequences to use (in case of re-runs)
+- dMRI_vol_for_b0AP: the (dir-AP) b0 volume in dwiAP that can be used for fmap estimation with TOPUP.
+- dMRI_vol_for_b0PA: the (dir-PA) b0 volume in dwiPA (only b0s!, and currently only one, i.e. 3D file) that can be used for fmap estimation with TOPUP.
+- sMRI_use_for_5ttgen_mcrib: 1 indicates the acq-SPC T2w that should be used in the project for 5TT generation from Edinbourgh styled T2 SPACE (PK_PMR project)
 
+One example (note that proper tab-separation exists between columns).
+```
+participant_id	session_id	filename	qc_pass_fail	qc_signature	dMRI_dwiAP	dMRI_vol_for_b0AP	dMRI_vol_for_b0PA	sMRI_use_for_5ttgen_mcrib
+sub-PMR001	ses-MR2	anat/sub-PMR001_ses-MR2_acq-MPRAGE_run-1_T1w.nii.gz	1FL	-	-	-	-
+sub-PMR001	ses-MR2	anat/sub-PMR001_ses-MR2_acq-SPC_run-1_T2w.nii.gz	1FL	-	-	-	1
+sub-PMR001	ses-MR2	anat/sub-PMR001_ses-MR2_acq-cor_run-1_T2w.nii.gz	1FL	-	-	-	-
+sub-PMR001	ses-MR2	anat/sub-PMR001_ses-MR2_acq-MCRIB_run-1_T2w.nii.gz	1FL	-	-	-	-
+sub-PMR001	ses-MR2	anat/sub-PMR001_ses-MR2_run-1_FLAIR.nii.gz	1	FL	-	-	-	-
+sub-PMR001	ses-MR2	fmap/sub-PMR001_ses-MR2_acq-se_dir-AP_run-1_epi.nii.gz	0FL	-	-	-	-
+sub-PMR001	ses-MR2	fmap/sub-PMR001_ses-MR2_acq-se_dir-PA_run-1_epi.nii.gz	1FL	-	-	-	-
+sub-PMR001	ses-MR2	func/sub-PMR001_ses-MR2_task-rest_dir-PA_run-1_sbref.nii.gz	1	FL	-	-	-	-
+sub-PMR001	ses-MR2	func/sub-PMR001_ses-MR2_task-rest_dir-PA_run-1_bold.nii.gz	1	FL	-	-	-	-
+sub-PMR001	ses-MR2	func/sub-PMR001_ses-MR2_task-rest_dir-AP_run-1_sbref.nii.gz	1	FL	-	-	-	-
+sub-PMR001	ses-MR2	func/sub-PMR001_ses-MR2_task-rest_dir-AP_run-1_bold.nii.gz	1	FL	-	-	-	-
+sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-PA_run-1_sbref.nii.gz	1FL	-	-	-	-
+sub-PMR001	ses-MR2	fmap/sub-PMR001_ses-MR2_acq-dwi_dir-PA_run-1_epi.nii.gz1FL	-	-	0	-
+sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_sbref.nii.gz	1FL	-	-	-	-
+sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-AP_run-1_dwi.nii.gz	1	FL	1	0	-	-
+sub-PMR001	ses-MR2	dwi/sub-PMR001_ses-MR2_dir-PA_run-2_sbref.nii.gz	0FL	-	-	-	-
+sub-PMR001	ses-MR2	fmap/sub-PMR001_ses-MR2_acq-dwi_dir-PA_run-2_epi.nii.gz1FL	-	-
+```
+# Generation av tsv-files
+particpants.tsv
+session.tsv
+
+TBC
+
+# MRI protocol and BIDS conversion rules
 ## Scanning protocol 
+The complete MR-protocol i stored in `$studydir/sequences` but outlined here
+
 1. Head Scout
 2. Localizer
 3. t1_mprage_sag_iso
