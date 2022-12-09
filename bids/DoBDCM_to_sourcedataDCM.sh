@@ -16,7 +16,7 @@ sourcedata-folder
 Data is copied and with file and folder names rearranged and renamed.
 
 Arguments:
-  patient			Patient's DoBDCM-folder in format PMR/PK$SubjectID_$SessionID_DoBYYYYMMDD (e.g. PMR002_MR2_YYYYMMDD or PK340_MR2_YYYYMMDD) 
+  patient			Patient's DoBDCM-folder in format PMR/PK$SubjectID_$SessionID_DoBYYYYMMDD (e.g. PMR002_MR2_DoBYYYYMMDD or PK340_MR2_DoBYYYYMMDD) 
 Options:
   -sourcedata			Output sourcedata folder (default: sourcedata)
   -DoBDCM		       	Input DCM-folder (default: DICOM_DoB)
