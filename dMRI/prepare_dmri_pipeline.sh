@@ -158,19 +158,19 @@ if [ -f $sessionfile ]; then
 		      anat)
 			  if [ ! -f $datadir/anat/orig/$filebase.nii.gz ]; then 
 			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/anat/orig/.
-			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			      echo "$line" | sed "s/$filedir\//$filedir\/orig\//g" >> $datadir/session_QC.tsv
 			  fi
 			  ;;
 		      dwi)
 			  if [ ! -f $datadir/dwi/orig/$filebase.nii.gz ]; then 
 		    	      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
-			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			      echo "$line" | sed "s/$filedir\//$filedir\/orig\//g" >> $datadir/session_QC.tsv
 			  fi
 			  ;;		      
 		      fmap)
 			  if [ ! -f $datadir/anat/fmap/$filebase.nii.gz ]; then 
 			      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/fmap/orig/.
-			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
+			      echo "$line" | sed "s/$filedir\//$filedir\/orig\//g" >> $datadir/session_QC.tsv
 			  fi
 			  ;;
 		  esac
