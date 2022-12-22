@@ -162,7 +162,7 @@ if [ -f $sessionfile ]; then
 			  fi
 			  ;;
 		      dwi)
-			  if [ ! -f $datadir/anat/dwi/$filebase.nii.gz ]; then 
+			  if [ ! -f $datadir/dwi/orig/$filebase.nii.gz ]; then 
 		    	      cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $rawdatadir/$filedir/$filebase.bval $rawdatadir/$filedir/$filebase.bvec $datadir/dwi/orig/.
 			      echo "$line" | sed "s/$filedir/$filedir\/orig/g" >> $datadir/session_QC.tsv
 			  fi
