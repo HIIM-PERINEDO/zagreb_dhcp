@@ -178,15 +178,7 @@ if [ -f $sessionfile ]; then
 	      let linecounter++
 	done
     } < "$sessionfile";
-    
-    # Copy session.tsv file from $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv  
-    if [ ! -f $datadir/session.tsv ] && [ -f $rawdatadir/sub-$sID/ses-$ssID/session.tsv ]; then
-	echo "Copying $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv";
-	cp $rawdatadir/sub-$sID/ses-$ssID/session.tsv $datadir/session.tsv;
-    else
-	echo "No need/no file to transfer $rawdatadir/sub-$sID/ses-$ssID/session.tsv to $datadir/session.tsv";
-    fi
-    
+        
 else
     # no session_QC.tsv file, so use files from input
     filelist="$dwi $dwiAPsbref $dwiPA $dwiPAsbref $seAP $sePA"
