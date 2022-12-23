@@ -119,15 +119,16 @@ if [ -f $sessionfile ]; then
 		## DWI AP data
 		dwiAP=`echo "$line" | awk '{ print $6 }'`
 		if [ $dwiAP == 1 ]; then		    
-		    if [ ! -f $datadir/dwi/preproc/dwi.mif.gz ]; then 
+		    if [ ! -f $datadir/dwi/preproc/dwiAP.mif.gz ]; then 
 			mrconvert -json_import $datadir/$filedir/$filebase.json \
 				  -fslgrad $datadir/$filedir/$filebase.bvec $datadir/$filedir/$filebase.bval \
-				  $datadir/$filedir/$filebase.nii.gz $datadir/dwi/preproc/dwi.mif.gz
+				  $datadir/$filedir/$filebase.nii.gz $datadir/dwi/preproc/dwiAP.mif.gz
 		    fi
 		fi		
 		## b0AP and b0PA data
 		volb0AP=`echo "$line" | awk '{ print $7 }'`
 		if [ ! $volb0AP == "-" ]; then
+		    b0APvol=$volb0AP #Remember this to later!!
 		    if [ ! -f $datadir/dwi/preproc/b0AP.mif.gz ]; then
 			mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
 			    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/dwi/preproc/topup/b0AP.mif.gz
@@ -155,7 +156,7 @@ fi
 
 
 ##################################################################################
-# 1b. Create b0APPA.mif.gz in $datadir/dwi/preproc/topup
+# 1b. Create dwi.mif.gz $datadir/dwi/preproc and b0APPA.mif.gz in $datadir/dwi/preproc/topup
 
 cd $datadir/dwi/preproc
 
@@ -175,6 +176,39 @@ if [ ! -f topup/b0APPA.mif.gz ]; then
 	exit;
     fi
 fi
+
+# Create dwi.mif.gz to go into further processing. NOTE: b0APvol will be put first in dwi.mif.gz
+# This code snippet has been adapted from https://github.com/sotnir/NENAH-BIDS/blob/main/dMRI/preprocess.sh
+if [ ! -f dwi.mif.gz ]; then
+    
+    # 1. extract higher shells and put in a joint file
+    dwiextract -shells 400,1000,2600 dwiAP.mif.gz tmp_dwiAP_b400b1000b2600.mif
+	
+    # 2. Sort out b0s
+    # a) extract the b0 that will be used for TOPUP by
+    b0topup=$b0APvol;
+    # b) and put in /topup/tmp_b0$dir.mif
+    mrconvert -coord 3 $b0topup -axes 0,1,2 dwiAP.mif.gz topup/tmp_b0AP.mif
+    # c) and extract b0s from dwiAP.mif where the b0 for TOPUP will be placed first (by creating and an indexlist)
+    indexlist=$b0topup;
+    for index in `mrinfo -shell_indices dwiAP.mif.gz | awk '{print $1}' | sed 's/\,/\ /g'`; do
+	if [ ! $index == $b0topup ]; then
+	    indexlist=`echo $indexlist,$index`;
+	fi
+    done
+    echo "Extracting b0-values in order $indexlist from dwiAP.mif.gz, i.e. extracting volume $b0topup for TOPUP first";
+    mrconvert -coord 3 $indexlist dwiAP.mif.gz tmp_dwiAP_b0.mif
+	
+    
+    # Put everything into file dwi.mif.gz, with AP followed by PA volumes
+    # FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif.gz
+    mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b400b1000b2600.mif dwi.mif.gz
+
+    # clean-up
+    rm tmp_dwi*.mif
+    
+fi
+
 
 cd $currdir
 
@@ -282,7 +316,7 @@ mrconvert preproc/mask.mif.gz mask.mif.gz
 dwi=dwi_preproc
 
 # B0-normalisation
-if [ ! -f ${dwi}_inorm.mif.gz ];then
+if [ ! -f ${dwi}_inorm.mif.gz ]; then
     dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_inorm.mif.gz
 fi
 
@@ -291,7 +325,7 @@ for bvalue in 0 400 1000 2600; do
     bfile=meanb$bvalue
 
     if [ $bvalue == 0 ]; then
-	if [ ! -f $bfile.mif.gz]; then
+	if [ ! -f $bfile.mif.gz ]; then
 	    dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
 	fi
     fi
