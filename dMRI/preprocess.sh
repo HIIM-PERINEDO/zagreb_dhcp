@@ -282,7 +282,7 @@ mrconvert preproc/mask.mif.gz mask.mif.gz
 dwi=dwi_preproc
 
 # B0-normalisation
-if [ ! -f ${dwi}_inorm.mif.gz ];then
+if [ ! -f ${dwi}_inorm.mif.gz ]; then
     dwinormalise individual $dwi.mif.gz mask.mif.gz ${dwi}_inorm.mif.gz
 fi
 
@@ -291,7 +291,7 @@ for bvalue in 0 400 1000 2600; do
     bfile=meanb$bvalue
 
     if [ $bvalue == 0 ]; then
-	if [ ! -f $bfile.mif.gz]; then
+	if [ ! -f $bfile.mif.gz ]; then
 	    dwiextract -shells $bvalue ${dwi}_inorm.mif.gz - |  mrmath -force -axis 3 - mean $bfile.mif.gz
 	fi
     fi
