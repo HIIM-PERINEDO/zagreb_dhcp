@@ -35,7 +35,7 @@ currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-sessionfile=$datadir/session_QC.tsv
+sessionfile=""
 
 if [ ! -f $sessionfile ]; then
     dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
@@ -56,6 +56,8 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+sessionfile=$datadir/session_QC.tsv
 
 # Check if images exist, else put in No_image
 if [ ! -f $dwi ]; then dwi=""; fi
