@@ -15,7 +15,7 @@ Arguments:
   sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -s / -session-file		Session file to depict which files should go into preprocessing. Overrides defaults below (default: \$datadir/session_QC.tsv)
+  -s / -session-file		Session file to depict which files should go into preprocessing. Overrides defaults below (default: derivatives/dMRI/sub-\$sID/ses-\$ssID/session_QC.tsv)
   -dwi				dMRI AP data (default: \$datadir/dwi/orig/sub-sID_ses-ssID_dir-AP_run-1_dwi.nii.gz)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
@@ -35,7 +35,7 @@ currdir=$PWD
 
 # Defaults
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID
-sessionfile=""
+sessionfile=derivatives/dMRI/sub-$sID/ses-$ssID/session_QC.tsv
 
 if [ ! -f $sessionfile ]; then
     dwi=$datadir/dwi/orig/sub-${sID}_ses-${ssID}_dir-AP_run-1_dwi.nii.gz
@@ -57,7 +57,6 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-sessionfile=$datadir/session_QC.tsv
 
 # Check if images exist, else put in No_image
 if [ ! -f $dwi ]; then dwi=""; fi
