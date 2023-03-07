@@ -226,7 +226,7 @@ if [ ! -f dwi_den.mif.gz ]; then
     echo Doing MP PCA-denosing with dwidenoise
     # PCA-denoising
     dwidenoise dwi.mif.gz dwi_den.mif.gz -noise denoise/dwi_noise.mif.gz -nthreads 16;
-    dwidenoise dwi.mif.gz dwi_den.mif.gz -noise denoise/dwi_noise.mif.gz -nthreads 8;
+    #dwidenoise dwi.mif.gz dwi_den.mif.gz -noise denoise/dwi_noise.mif.gz -nthreads 8;
     # and calculate residuals
     mrcalc dwi.mif.gz dwi_den.mif.gz -subtract denoise/dwi_den_residuals.mif.gz
     echo Check the residuals! Should not contain anatomical structure
@@ -239,7 +239,7 @@ if [ ! -f dwi_den_unr.mif.gz ]; then
     echo Remove Gibbs Ringing Artifacts with mrdegibbs
     # Gibbs 
     mrdegibbs -axes 0,1 dwi_den.mif.gz dwi_den_unr.mif.gz -nthreads 16
-    mrdegibbs -axes 0,1 dwi_den.mif.gz dwi_den_unr.mif.gz -nthreads 8
+    #mrdegibbs -axes 0,1 dwi_den.mif.gz dwi_den_unr.mif.gz -nthreads 8
     #calculate residuals
     mrcalc dwi_den.mif.gz  dwi_den_unr.mif.gz -subtract unring/dwi_den_unr_residuals.mif.gz
     echo Check the residuals! Should not contain anatomical structure
