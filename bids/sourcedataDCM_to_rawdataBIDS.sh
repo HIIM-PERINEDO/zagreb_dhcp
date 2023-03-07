@@ -60,6 +60,7 @@ fi
 
 # we'll be running the Docker containers as yourself, not as root:
 userID=$(id -u):$(id -g)
+echo "$userID"
 
 ###   Get docker images:   ###
 docker pull nipy/heudiconv:latest
@@ -75,7 +76,7 @@ heuristicfile=`basename $heuristicfile`
 docker run --name heudiconv_container \
            --user $userID \
            --rm \
-           -it \
+	   -t \
            --volume $studydir:/base \
 	   --volume $codedir:/code \
 	   --volume $heuristicdir:/heuristic \
