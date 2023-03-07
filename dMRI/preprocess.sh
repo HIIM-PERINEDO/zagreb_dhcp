@@ -309,6 +309,7 @@ fi
 if [ ! -f  ${dwi}_N4.mif.gz ]; then
     threads=10;
     if [ ! -d N4 ]; then mkdir N4;fi
+    # Add number of threads used
     dwibiascorrect ants -mask mask.mif.gz -bias N4/bias.mif.gz -nthreads 16 $dwi.mif.gz ${dwi}_N4.mif.gz
 fi
 
