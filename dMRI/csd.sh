@@ -128,13 +128,14 @@ if [[ $response = msmt_5tt ]]; then
     csddir=csd/$method-$atlas #Becomes as sub-folder in $datadir/dwi
     if [ ! -d $csddir ];then mkdir -p $csddir;fi
 fi
-
+    
+    responsedir=response
     # Calculate ODFs
     echo "Calculating CSD using ACT and $response"
     # model with all 3 tissue types: WM GM CSF
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm_3tt.mif.gz $csddir/${response}_gm.txt $csddir/csd_${response}_gm_3tt.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf_3tt.mif.gz
+    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $responsedir/${response}_wm.txt $csddir/csd_${response}_wm_3tt.mif.gz $responsedir/${response}_gm.txt $csddir/csd_${response}_gm_3tt.mif.gz $responsedir/${response}_csf.txt $csddir/csd_${response}_csf_3tt.mif.gz
     # model with all 2 tissue types: WM CSF
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $csddir/${response}_wm.txt $csddir/csd_${response}_wm_2tt.mif.gz $csddir/${response}_csf.txt $csddir/csd_${response}_csf_2tt.mif.gz
+    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $responsedir/${response}_wm.txt $csddir/csd_${response}_wm_2tt.mif.gz $responsedir/${response}_csf.txt $csddir/csd_${response}_csf_2tt.mif.gz
     mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}_wm_3tt.mif.gz -odf.load_sh $csddir/csd_${response}_wm_2tt.mif.gz -mode 2;
 fi
 
