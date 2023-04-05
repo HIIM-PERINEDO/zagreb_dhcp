@@ -8,15 +8,15 @@ usage()
 Script to run the mirtk neonatal-segmentation (DrawEM) on processed sMRI data
 
 Arguments:
-  sID				Subject ID (e.g. PMRABC) 
+  sID				Subject ID (e.g. PMRXYZ) 
   ssID                       	Session ID (e.g. MR2)
   age				Age at scanning in weeks (e.g. 40)
 Options:
-  -T2				T2 image to segment (default: derivatives/sMRI/sub-sID/ses-ssID/preproc/sub-ssID_ses-ssID_desc-preproc_T2w.nii.gz)
-  -m / -mask			mask (default: derivatives/sMRI/sub-sID/ses-ssID/preproc/sub-ssID_ses-ssID_space-T2w_mask.nii.gz)
-  -d / -data-dir  <directory>   The directory used to run the script and output the files (default: derivatives/sMRI/sub-sID/ses-ssID/neonatal-segmentation)
-  -a / -atlas	  		Atlas to use for DrawEM neonatal segmentation (default: ALBERT)    
-  -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
+  -T2				T2 image to segment (default: derivatives/sMRI_preproc/sub-sID/ses-ssID/sub-ssID_ses-ssID_desc-preproc_T2w.nii.gz)
+  -m / -mask			mask (default: derivatives/sMRI_preproc/sub-sID/ses-ssID/sub-ssID_ses-ssID_space-T2w_mask.nii.gz)
+  -d / -data-dir  <directory>   The directory used to run the script and output the files (default: derivatives/sMRI_neonatal_segmentation/sub-sID/ses-ssID)
+  -a / -atlas	  		Atlas to use for DrawEM neonatal segmentation (default: MCRIB)    
+  -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 16)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -31,16 +31,17 @@ ssID=$2
 age=$3
 
 currdir=`pwd`
-T2=derivatives/sMRI/sub-$sID/ses-$ssID/preproc/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
-mask=derivatives/sMRI/sub-$sID/ses-$ssID/preproc/sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz
-datadir=derivatives/sMRI/sub-$sID/ses-$ssID/neonatal-segmentation
-threads=10
-atlas=ALBERT
+T2=derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
+mask=derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz
+datadir=derivatives/sMRI_neonatal_segmentation/sub-$sID/ses-$ssID
+threads=16
+atlas=MCRIB
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 currdir=`pwd`
 
+#shift all 3 input arguments
 shift; shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -71,6 +72,7 @@ $BASH_SOURCE $command
 # Set up log
 script=`basename $BASH_SOURCE .sh`
 logdir=$datadir/logs
+if [ ! -d $datadir ];then mkdir -p $datadir; fi
 if [ ! -d $logdir ]; then mkdir -p $logdir; fi
 
 

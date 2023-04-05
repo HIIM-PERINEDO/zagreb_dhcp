@@ -33,7 +33,7 @@ datadir=derivatives/sMRI/sub-$sID/ses-$ssID/preproc
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-shift
+shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-T2) shift; t2w=$1; ;;

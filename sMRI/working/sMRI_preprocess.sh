@@ -13,7 +13,7 @@ Arguments:
   ssID				Session ID (e.g. MR2) 
 Options:
   -T2				T2 image (default: rawdata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_acq-MCRIB_run-1_T2w.nii.gz)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/sMRI/sub-sID/ses-ssID/preproc)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/sMRI_preproc/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -29,11 +29,11 @@ ssID=$2
 # Defaults
 currdir=$PWD
 t2w=rawdata/sub-$sID/ses-$ssID/anat/sub-${sID}_ses-${ssID}_acq-MCRIB_run-1_T2w.nii.gz
-datadir=derivatives/sMRI/sub-$sID/ses-$ssID/preproc
+datadir=derivatives/sMRI_preproc/sub-$sID/ses-$ssID
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-shift
+shift; shift
 while [ $# -gt 0 ]; do
     case "$1" in
 	-T2) shift; t2w=$1; ;;
@@ -46,7 +46,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Check if images exist, else put in No_image
-if [ ! -f $tw2 ]; then tw2=""; fi
+if [ ! -f $t2w ]; then t2w=""; fi
 
 echo "Preproc for sMRI-processing
 Subject:       $sID 
@@ -55,7 +55,8 @@ Directory:     $datadir
 $BASH_SOURCE   $command
 ----------------------------"
 
-logdir=derivatives/preprocessing_logs/sub-$sID/ses-$ssID
+#logdir=derivatives/preprocessing_logs/sub-$sID/ses-$ssID
+logdir=$datadir/logs
 if [ ! -d $datadir ];then mkdir -p $datadir; fi
 if [ ! -d $logdir ];then mkdir -p $logdir; fi
 
@@ -69,7 +70,7 @@ echo
 
 ##################################################################################
 # 0. Copy to file to datadir 
-if [ ! -d $datadir ]; then mkdir -p $datadir; fi
+#if [ ! -d $datadir ]; then mkdir -p $datadir; fi
 
 cp $t2w $datadir/.
 
@@ -86,21 +87,22 @@ t2w=`basename $t2w .nii.gz` #sub-${sID}_ses-${ssID}_T2w
 cd $datadir
 
 image=$t2w;
-if [[ $image = "" ]]; then echo "No T2w image"; exit;
+if [[ $image = "" ]]; then 
+  echo "No T2w image"; exit;
 else
-    if [[ `echo $image | sed 's/\_/\ /g' | awk '{print $NF}'` = T2w ]]; then
-	# BIDS compliant highres name by adding desc-hires in front of T2w 
-	highres=`echo $image | sed 's/\_T2w/\_desc\-hires\_T2w/g'`
-    else
-	# or else, just add desc-highres before the file name
-	highres=desc-hires_${image}
-    fi
-    # Do interpolation (spline)
-    if [ ! -f $highres.nii.gz ]; then
-	flirt -in $image.nii.gz -ref $image.nii.gz -applyisoxfm 0.68 -nosearch -out $highres.nii.gz -interp spline
-    fi
-    # and update t2w to point to highres
-    t2w=$highres;
+  if [[ `echo $image | sed 's/\_/\ /g' | awk '{print $NF}'` = T2w ]]; then
+	  # BIDS compliant highres name by adding desc-hires in front of T2w 
+	  highres=`echo $image | sed 's/\_T2w/\_desc\-hires\_T2w/g'`
+  else
+	  # or else, just add desc-highres before the file name
+	  highres=desc-hires_${image}
+  fi
+  # Do interpolation (spline)
+  if [ ! -f $highres.nii.gz ]; then
+	  flirt -in $image.nii.gz -ref $image.nii.gz -applyisoxfm 0.68 -nosearch -out $highres.nii.gz -interp spline
+  fi
+  # and update t2w to point to highres
+  t2w=$highres;
 fi
 
 cd $currdir
@@ -109,11 +111,9 @@ cd $currdir
 ## 3. Create brain mask in T2w-space
 cd $datadir
 if [ ! -f sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz ];then
-    
     # bet T2w using -F flag
     bet ${t2w}.nii.gz ${t2w}_brain.nii.gz -m -R -F #f 0.3
     mv ${t2w}_brain_mask.nii.gz sub-${sID}_ses-${ssID}_space-T2w_mask.nii.gz
-
     # Clean-up
     rm *brain*
 fi
