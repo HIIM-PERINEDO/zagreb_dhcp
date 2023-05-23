@@ -13,7 +13,7 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
 Options:
   -s / -session-file		Session file to depict which T2w file that should be used. Overrides defaults below (default: rawdata/sub-sID/ses-ssID/session_QC.tsv)
-  -T2				T2w image to use (default: rawdata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_acq-SPC_run-1_T2w.nii.gz)
+  -T2				T2w image to use (default: derivatives/dMRI/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_acq-MCRIB_run-1_T2w.nii.gz)
   -threads			Number of CPUs to use (default: 10)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_neonatal_5tt_mcrib/sub-$sID/ses-$ssID)
   -h / -help / --help           Print usage.
@@ -42,14 +42,14 @@ shift; shift
 currdir=$PWD
 
 # Defaults
-rawdatadir=rawdata/sub-$sID/ses-$ssID
-sessionfile=$rawdatadir/session_QC.tsv
+origdatadir=derivatives/dMRI/sub-$sID/ses-$ssID    #rawdata/sub-$sID/ses-$ssID
+sessionfile=$origdatadir/session_QC.tsv
 MCRIBpath=/home/perinedo/Projects/Atlases/M-CRIB/M-CRIB_for_MRtrix_5ttgen_neonatal
 datadir=derivatives/dMRI_neonatal_5tt_mcrib/sub-$sID/ses-$ssID
-threads=16
+threads=24
 
 if [ ! -f $sessionfile ]; then
-    T2=$rawdatadir/anat/sub-${sID}_ses-${ssID}_acq-SPC_run-1_T2w.nii.gz
+    T2=$origdatadir/anat/sub-${sID}_ses-${ssID}_acq-MCRIB_run-1_T2w.nii.gz
 fi
 
 # check whether the different tools are set and load parameters
@@ -120,20 +120,40 @@ if [ -f $sessionfile ]; then
 	    # check if the file/image has passed QC (qc_pass_fail = 4th column)
 	    QCPass=`echo "$line" | awk '{ print $4 }'`
 
-	    if [ $QCPass == 1 ]; then
+	    if [ $QCPass == 1 ]; then  #if [ $QCPass == 1 or $QCPass == 0.5 ]; then
             #### Read flags in session.tsv file with corresponding column index
             ## Flag for use of sMRI in 5ttgen mcrib (sMRI_use_for_5ttgen_mcrib = 9th column)
-            sMRI_use_for_5ttgen_mcrib=`echo "$line" | awk '{ print $9 }'`
-            if [ $sMRI_use_for_5ttgen_mcrib == 1 ]; then
-                # Get file from column nbr 3
-                file=`echo "$line" | awk '{ print $3 }'`
+
+            #NEW CODE START
+            file=`echo "$line" | awk '{ print $3 }'`
+            echo $file
+            
+            #if has MCRIB in name then select is as the file
+            if echo "$file" | grep -q "MCRIB"; then
+                echo "IS VALID"
                 filebase=`basename $file .nii.gz`
                 filedir=`dirname $file`
                 let counter++
                 if [ ! -f $datadir/anat/$filebase.mif.gz ]; then
-                cp $rawdatadir/$filedir/$filebase.nii.gz $rawdatadir/$filedir/$filebase.json $datadir/.
+                cp $origdatadir/$filedir/$filebase.nii.gz $origdatadir/$filedir/$filebase.json $datadir/.
                 fi
+            else
+                echo "IS NOT VALID"
             fi
+            #NEW CODE END
+
+            # sMRI_use_for_5ttgen_mcrib=`echo "$line" | awk '{ print $9 }'`
+            # if [ $sMRI_use_for_5ttgen_mcrib == 1 ]; then
+            #     # Get file from column nbr 3
+            #     file=`echo "$line" | awk '{ print $3 }'`
+            #     filebase=`basename $file .nii.gz`
+            #     filedir=`dirname $file`
+            #     let counter++
+            #     if [ ! -f $datadir/anat/$filebase.mif.gz ]; then
+            #     cp $origdatadir/$filedir/$filebase.nii.gz $origdatadir/$filedir/$filebase.json $datadir/.
+            #     fi
+            # fi
+
 	    fi
 	    
 	done
@@ -165,7 +185,7 @@ cd $datadir
 
 # Create brain mask
 if [ ! -f sub-${sID}_ses-${ssID}_desc-brain_mask.nii.gz ]; then
-    bet sub-${sID}_ses-${ssID}_T2w.nii.gz tmp.nii.gz -m -R
+    bet sub-${sID}_ses-${ssID}_T2w.nii.gz tmp.nii.gz -m -R -f 0.3
     mv tmp_mask.nii.gz sub-${sID}_ses-${ssID}_desc-brain_mask.nii.gz
     rm tmp*nii.gz
 fi
@@ -210,7 +230,8 @@ if [ ! -f sub-${sID}_ses-${ssID}_5TT.nii.gz ]; then
     # clean up
     # rm -rf $scratchdir
 fi
-
+# sub-${sID}_ses-${ssID}_desc-restore_T2w.nii.gz  is the input T2 file that was N4 corrected
+# sub-${sID}_ses-${ssID}_5TT.nii.gz are the 5tt which is a 4d tensor
 cd $currdir
 
 #######################################################################################

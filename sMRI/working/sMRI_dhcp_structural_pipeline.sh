@@ -16,7 +16,7 @@ Options:
   -T2				T2 image to segment with full path (default: $studyfolder/derivatives/sMRI_preproc/sub-\$sID/ses-\$ssID/sub-\$sID_ses-\$ssID_desc-preproc_T2w.nii.gz)
   -T1				T1 image to segment with full path (default: $studyfolder/derivatives/sMRI_preproc/sub-\$sID/ses-\$ssID/sub-\$sID_ses-\$ssID_T1w.nii.gz)
   -d / -data-dir  <directory>   The directory used to run the script and output the files with full path (default: $studyfolder/derivatives/sMRI_dhcp_structural_pipeline/sub-\$sID/ses-\$ssID)
-  -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 10)
+  -t / -threads  <number>       Number of threads (CPU cores) allowed for the registration to run in parallel (default: 16)
   -h / -help / --help           Print usage.
 "
   exit;
@@ -37,7 +37,7 @@ studyfolder=$currdir;
 T2=$studyfolder/derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_desc-preproc_T2w.nii.gz
 T1=$studyfolder/derivatives/sMRI_preproc/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_T1w.nii.gz
 datadir=$studyfolder/derivatives/sMRI_dhcp_structural_pipeline     #/sub-$sID/ses-$ssID
-threads=10
+threads=16
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

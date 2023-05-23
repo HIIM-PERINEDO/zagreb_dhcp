@@ -61,7 +61,7 @@ done
 
 # Check if images exist, else put in No_image
 if [ ! -f $dwi ]; then dwi=""; fi
-if [ ! -f $sessionfile ]; then sessionfile=""; fi
+if [ ! -f $sessionfile ]; then sessionfile="No_sessionfile"; fi # ""
 
 echo "dMRI preprocessing
 Subject:       	$sID 
@@ -102,7 +102,8 @@ inputfilesdir=`dirname $sessionfile`
 if [ ! -d $datadir/topup ]; then mkdir -p $datadir/topup; fi
 
 # If we have a session.tsv file, use this
-if [ -f $sessionfile ]; then
+#if [ -f $sessionfile ]; then
+if [ ! $sessionfile == "No_sessionfile" ]; then
     # Read $sessionfile and use entries to create relevant files
     {
 	read
@@ -140,7 +141,10 @@ if [ -f $sessionfile ]; then
 		volb0PA=`echo "$line" | awk '{ print $8 }'`
 		if [ ! $volb0PA == "-" ]; then
 		    if [ ! -f $datadir/b0PA.mif.gz ]; then
-			mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json $datadir/topup/b0PA.mif.gz
+			#mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json $datadir/topup/b0PA.mif.gz
+            #new
+            mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
+			    mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif.gz
 		    fi
 		fi
 	    fi
@@ -184,9 +188,11 @@ fi
 # This code snippet has been adapted from https://github.com/sotnir/NENAH-BIDS/blob/main/dMRI/preprocess.sh
 if [ ! -f dwi.mif.gz ]; then
     
+    valb0=`mrinfo -shell_indices dwiAP.mif.gz | awk '{print $1}' | sed 's/\,/\ /g'`
     # 1. extract higher shells and put in a joint file
     dwiextract -shells 400,1000,2600 dwiAP.mif.gz tmp_dwiAP_b400b1000b2600.mif
-	
+	#dwiextract -shells $valb0,1000 dwiAP.mif.gz tmp_dwiAP_b0b1000.mif
+
     # 2. Sort out b0s
     # a) extract the b0 that will be used for TOPUP by
     b0topup=$b0APvol;
@@ -206,6 +212,7 @@ if [ ! -f dwi.mif.gz ]; then
     # Put everything into file dwi.mif.gz, with AP followed by PA volumes
     # FL 2021-12-20 - NOTE TOPUP and EDDY not working properly for dirPA, so only use dirAP to go into dwi.mif.gz
     mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b400b1000b2600.mif dwi.mif.gz
+    #mrcat -axis 3 tmp_dwiAP_b0.mif tmp_dwiAP_b0b1000.mif dwi.mif.gz
 
     # clean-up
     rm tmp_dwi*.mif
@@ -262,7 +269,7 @@ if [ ! -f dwi_den_unr_eddy.mif.gz ];then
 		  -topup_options " --iout=field_mag_unwarped" \
 		  -eddy_options " --slm=linear --repol --mporder=8 --s2v_niter=10 --s2v_interp=trilinear --s2v_lambda=1 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 " \
 		  -eddyqc_all eddy \
-		  -nthreads 16 \
+		  -nthreads 20 \
 		  dwi_den_unr.mif.gz \
 		  dwi_den_unr_eddy.mif.gz;
     # or use -rpe_pair combo: dwifslpreproc DWI_in.mif DWI_out.mif -rpe_pair -se_epi b0_pair.mif -pe_dir ap -readout_time 0.72 -align_seepi
@@ -300,7 +307,7 @@ if [ ! -f  ${dwi}_N4.mif.gz ]; then
     threads=10;
     if [ ! -d N4 ]; then mkdir N4;fi
     # Add number of threads used
-    dwibiascorrect ants -mask mask.mif.gz -bias N4/bias.mif.gz -nthreads 16 $dwi.mif.gz N4/${dwi}_N4.mif.gz
+    dwibiascorrect ants -mask mask.mif.gz -bias N4/bias.mif.gz -nthreads 20 $dwi.mif.gz N4/${dwi}_N4.mif.gz
 fi
 
 

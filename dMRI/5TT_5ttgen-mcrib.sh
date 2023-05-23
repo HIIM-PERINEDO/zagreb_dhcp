@@ -13,7 +13,7 @@ Arguments:
   ssID                       	Session ID (e.g. MR2)
 Options:
   -s / -session-file		Session file to depict which T2w file that should be used. Overrides defaults below (default: rawdata/sub-sID/ses-ssID/dir/session.tsv)
-  -t2w				T2w image to use (default: rawdata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_acq-SPC_run-1_t2w.nii.gz)
+  -t2w				T2w image to use (default: rawdata/sub-sID/ses-ssID/anat/sub-sID_ses-ssID_acq-MCRIB_un-1_t2w.nii.gz)
   -threads			Number of CPUs to use (default: 10)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_study_structural_connectivity_PKandPMR/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
@@ -48,7 +48,7 @@ threads=10
 
 datadir=derivatives/dMRI_study_structural_connectivity_PKandPMR/sub-$sID/ses-$ssID
 if [ ! -f $sessionfile ]; then
-    t2w=$rawdatadir/anat/sub-${sID}_ses-${ssID}_acq-SPC_run-1_t2w.nii.gz
+    t2w=$rawdatadir/anat/sub-${sID}_ses-${ssID}_acq-MCRIB_run-1_t2w.nii.gz
 fi
 
 # check whether the different tools are set and load parameters
