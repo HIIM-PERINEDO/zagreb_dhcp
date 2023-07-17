@@ -41,15 +41,17 @@ currdir=$PWD
 method="neonatal-5TT" #DrawEM
 atlas="M-CRIB" #ALBERT
 datadir=derivatives/dMRI_connectome/sub-$sID/ses-$ssID
-tract=derivatives/dMRI_tractography/sub-$sID/ses-$ssID/tractography/$method-$atlas/whole_brain_10M_sift.tck
+tract=derivatives/dMRI_tractography/sub-$sID/ses-$ssID/tractography/$method-$atlas/whole_brain_10M.tck   # sift2 weights are assumed to be in file whole_brain_10M_sift2.csv
 label=derivatives/dMRI_registration/sub-$sID/ses-$ssID/dwi/parcellation/$method-$atlas/segmentations/Structural_Labels_coreg.mif.gz #derivatives/dMRI_registration/sub-$sID/ses-$ssID/dwi/parcellation/$method-$atlas/segmentations/all_labels_coreg.mif.gz
 codedir=code/zagreb_dhcp
 #lutin=$codedir/label_names/ALBERT/all_labels.txt
 #lutout=$codedir/label_names/ALBERT/all_labels_2_CorticalStructuresConnectome.txt
 #lutin=derivatives/dMRI_neonatal_5tt_mcrib/sub-$sID/ses-$ssID/sub-${sID}_ses-${ssID}_desc-mcrib_dseg.nii.gz;
-#lutout=$codedir/label_names/$atlas/Structural_Labels.txt;
-connectome=cortical
-threads=10
+lutin=$codedir/label_names/$atlas/M-CRIB_labels_itk_format.txt;
+lutout=$codedir/label_names/$atlas/Structural_Labels.txt;
+connectome=Structural_M-CRIB #cortical
+threads=24
+
 
 shift; shift
 while [ $# -gt 0 ]; do
@@ -99,13 +101,21 @@ echo
 ##################################################################################
 ## 0. Copy to files to relevant locations
 
+tractbase=`basename $tract .tck`
+tractssift2=${tractbase}_sift2.csv
+
 # Tractogram will go into tractography folder
 tractdir=tractography
 if [ ! -d $datadir/$tractdir ]; then mkdir -p $datadir/$tractdir; fi
 tractbase=`basename $tract .tck`
+origtractdir=`dirname $tract`
+
 if [ ! -f $datadir/$tractdir/$tractbase.tck ];then
-    cp $tract $datadir/$tractdir/.
+    echo "${origtractdir}/${tractssift2}"
+    cp $tract "${origtractdir}/${tractssift2}" $datadir/$tractdir/.
 fi
+
+
 
 # Labels file will go into parcellation folder and the correspondings atlas's segmentations subfolder
 segdir=parcellation/$method-$atlas/segmentations
@@ -149,6 +159,8 @@ label=`basename $label .mif.gz`
 lutin=`basename $lutin`
 lutout=`basename $lutout`
 
+
+
 ##################################################################################
 ## 1. Create parcellations in subfolder /segmentations
 
@@ -172,7 +184,8 @@ if [ ! -f $seg_out ]; then
     fi
         
     # first use labelconvert to extract connectome structures and put into a continuous LUT and make sure 3D and datatype uint32
-    labelconvert -force $seg_in $lut_in $lut_out - | mrmath -datatype uint32 -force -axis 3 - mean $seg_out
+    #labelconvert -force $seg_in $lut_in $lut_out - | mrmath -datatype uint32 -force -axis 3 - mean $seg_out
+    labelconvert -force $seg_in $lut_in $lut_out $seg_out
     # then use mrthreshold to get rid of entries past $thr and make sure $seg_out is 3D and with integer datatype# NOT needed since all $seg_out does not need to be thresholded
     #mrthreshold -abs $thr -invert $seg_out - | mrcalc -force -datatype uint32 - $seg_out -mul - | mrmath -force -axis 3 -datatype uint32 - mean $seg_out
 fi
@@ -188,7 +201,7 @@ cd $datadir
 if [ ! -f $condir/${tractbase}_${connectome}_Connectome.csv ]; then
     # Create connectome using ${tractbase}.tck
     echo "Creating $atlas $connectome connectome from ${tractbase}.tck"
-    tck2connectome -symmetric -zero_diagonal -scale_invnodevol -out_assignments $condir/assignments_${tractbase}_${connectome}_Connectome.csv $tractdir/$tractbase.tck $condir/${label}_2_${connectome}_Connectome.mif.gz $condir/${tractbase}_${connectome}_Connectome.csv    
+    tck2connectome -symmetric -zero_diagonal -scale_invnodevol -tck_weights_in $tractdir/$tractssift2 -out_assignments $condir/assignments_${tractbase}_${connectome}_Connectome.csv $tractdir/$tractbase.tck $condir/${label}_2_${connectome}_Connectome.mif.gz $condir/${tractbase}_${connectome}_Connectome.csv    
 fi
 
 cd $currdir

@@ -143,11 +143,13 @@ if [ ! -f $tractdir/whole_brain_${nbr}_edit100k.tck ];then
     tckedit $tractdir/whole_brain_${nbr}.tck -number 100k $tractdir/whole_brain_${nbr}_edit100k.tck
 fi
 
+
 # SIFT-filtering of whole-brain tractogram
 if [ ! -f $tractdir/whole_brain_${nbr}_sift.tck ]; then
     count=`tckinfo $tractdir/whole_brain_$nbr.tck | grep \ count: | awk '{print $2}'`;
     count0p10=`echo "$count / 10" | bc`;
-    tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift.tck
+    #tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift.tck
+    tcksift2 -act $actdir/$act5tt.mif.gz $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift2.csv
 fi
 if [ ! -f $tractdir/whole_brain_${nbr}_sift_edit100k.tck ];then
     tckedit $tractdir/whole_brain_${nbr}_sift.tck -number 100k $tractdir/whole_brain_${nbr}_sift_edit100k.tck

@@ -1,0 +1,8 @@
+sudo apt install libblas-dev liblapack-dev gfortran
+pip install dmri-amico --no-cache-dir --force-reinstall
+
+
+
+python -m venv env/python
+source env/python/bin/activate
+deactivate

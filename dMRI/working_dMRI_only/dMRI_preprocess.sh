@@ -112,41 +112,48 @@ if [ ! $sessionfile == "No_sessionfile" ]; then
 	    # check if the file/image has passed QC (qc_pass_fail = fourth column)
 	    QCPass=`echo "$line" | awk '{ print $4 }'`
 
-	    if [ $QCPass == 1 ]; then
+	    if [ $QCPass == 1 ] || [ $QCPass  == 0.5 ] ; then
 		
-		# Get file from column nbr 3
-		file=`echo "$line" | awk '{ print $3 }'`
-		filebase=`basename $file .nii.gz`
-		filedir=`dirname $file`
+            # Get file from column nbr 3
+            file=`echo "$line" | awk '{ print $3 }'`
+            filebase=`basename $file .nii.gz`
+            filedir=`dirname $file`
 
-		#### Read flags in session.tsv file with corresponding column index
-		## DWI AP data
-		dwiAP=`echo "$line" | awk '{ print $6 }'`
-		if [ $dwiAP == 1 ]; then		    
-            if [ ! -f $datadir/dwiAP.mif.gz ]; then 
-			mrconvert -json_import $inputfilesdir/$filedir/$filebase.json \
-				  -fslgrad $inputfilesdir/$filedir/$filebase.bvec $inputfilesdir/$filedir/$filebase.bval \
-				  $inputfilesdir/$filedir/$filebase.nii.gz $datadir/dwiAP.mif.gz
+            #### Read flags in session.tsv file with corresponding column index
+            ## DWI AP data
+            dwiAP=`echo "$line" | awk '{ print $6 }'`
+            if [ $dwiAP == 1 ] ; then		    
+                if [ ! -f $datadir/dwiAP.mif.gz ]; then 
+                mrconvert -json_import $inputfilesdir/$filedir/$filebase.json \
+                    -fslgrad $inputfilesdir/$filedir/$filebase.bvec $inputfilesdir/$filedir/$filebase.bval \
+                    $inputfilesdir/$filedir/$filebase.nii.gz $datadir/dwiAP.mif.gz
+                fi
+            fi		
+            ## b0AP and b0PA data
+            volb0AP=`echo "$line" | awk '{ print $7 }'`
+            if [ ! $volb0AP == "-" ]; then
+                b0APvol=$volb0AP #Remember this to later!!
+                echo $b0APvol
+                if [ ! -f $datadir/b0AP.mif.gz ]; then
+                mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json - | \
+                    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/topup/b0AP.mif.gz
+                fi
+            fi
+            volb0PA=`echo "$line" | awk '{ print $8 }'`
+            if [ ! $volb0PA == "-" ]; then
+                if [ ! -f $datadir/b0PA.mif.gz ]; then
+                    dimensions=`mrinfo -ndim $inputfilesdir/$filedir/$filebase.nii.gz`
+                    echo "Input dimension of PA:"
+                    echo $dimensions
+                    if [ $dimensions == 3 ]; then 
+                        #input image is 3D
+                        mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json $datadir/topup/b0PA.mif.gz
+                    else #input is 4D
+                        mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
+                            mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/topup/b0PA.mif.gz
+                    fi
+                fi
 		    fi
-		fi		
-		## b0AP and b0PA data
-		volb0AP=`echo "$line" | awk '{ print $7 }'`
-		if [ ! $volb0AP == "-" ]; then
-		    b0APvol=$volb0AP #Remember this to later!!
-		    if [ ! -f $datadir/b0AP.mif.gz ]; then
-			mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/topup/b0AP.mif.gz
-		    fi
-		fi
-		volb0PA=`echo "$line" | awk '{ print $8 }'`
-		if [ ! $volb0PA == "-" ]; then
-		    if [ ! -f $datadir/b0PA.mif.gz ]; then
-			#mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json $datadir/topup/b0PA.mif.gz
-            #new
-            mrconvert $datadir/$filedir/$filebase.nii.gz -json_import $datadir/$filedir/$filebase.json - | \
-			    mrconvert -coord 3 $volb0PA -axes 0,1,2 - $datadir/dwi/preproc/topup/b0PA.mif.gz
-		    fi
-		fi
 	    fi
 	    
 	done
@@ -218,7 +225,7 @@ if [ ! -f dwi.mif.gz ]; then
     rm tmp_dwi*.mif
     
 fi
-
+adc.mif.gz -
 
 cd $currdir
 

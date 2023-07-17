@@ -18,7 +18,7 @@ start=$1
 end=$2
 mr=MR2
 
-scripts=( "dMRI_prepare_dmri_pipeline.sh" "dMRI_preprocess.sh" "dMRI_response.sh" "dMRI_csd.sh"  "dMRI_neonatal_5tt_mcrib.sh" "dMRI_tractography.sh" ) #"dMRI_connectome.sh" 
+scripts=( "dMRI_prepare_dmri_pipeline.sh" "dMRI_preprocess.sh" "dMRI_response.sh" "dMRI_csd.sh"  "dMRI_neonatal_5tt_mcrib.sh" "dMRI_registration.sh" "dMRI_tractography.sh" "dMRI_connectome.sh" ) # 
 
 
 # Check if the input parameters are valid
