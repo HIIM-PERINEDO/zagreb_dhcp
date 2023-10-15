@@ -8,23 +8,18 @@ usage()
 Performs whole-brain tractography and SIFT-filtering
 
 Arguments:
-  sID				Subject ID (e.g. PMRxyz) 
-  ssID                       	Session ID (e.g. MR2)
+  sID				Subject ID (e.g. PK356) 
+  ssID                       	Session ID (e.g. MR1)
 Options:
-  -csd				CSD mif.gz-file (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/csd/dhollander/csd_dhollander_wm_2tt.mif.gz)
-  -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI_registration/sub-sID/ses-ssID/dwi/act/neonatal-5TT-M-CRIB/5TT_coreg.mif.gz)
-  -from
-  -to
+  -csd				CSD mif.gz-file (default: derivatives/dMRI/sub-sID/ses-ssID/csd/\$method-\$atlas/csd_msmt_5tt_wm_2tt.mif.gz)
+  -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI/sub-sID/ses-ssID/act/\$method-\$atlas/5TT_coreg.mif.gz)
   -nbr				Number of streamlines in whole-brain tractogram (default: 10M)
-  -threads			Number of threads for parallell processing (default: 24)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/tractography)
+  -threads			Number of threads for parallell processing (default: 10)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID/dwi)
   -h / -help / --help           Print usage.
 "
   exit;
 }
-#  -csd				CSD mif.gz-file (default: derivatives/dMRI_csd/sub-sID/ses-ssID/csd/dhollander/csd_dhollander_wm_2tt.mif.gz)
-#  -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI_registration/sub-sID/ses-ssID/dwi/act/neonatal-5TT-M-CRIB/5TT_coreg.mif.gz)
-#  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_tractography/sub-sID/ses-ssID/dwi)
 
 ################ ARGUMENTS ################
 
@@ -36,22 +31,18 @@ ssID=$2
 currdir=$PWD
 
 # Defaults
-method=neonatal-5TT #DrawEM 
-atlas="M-CRIB" #ALBERT 
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/tractography #datadir=derivatives/dMRI_tractography/sub-$sID/ses-$ssID
+method=neonatal-5TT
+atlas=M-CRIB
+datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi
 actdir=act/$method-$atlas
 csddir=csd/$method-$atlas
 tractdir=tractography/$method-$atlas
 
-#csd=$datadir/$csddir/csd_msmt_5tt_wm_2tt.mif.gz
-#act5tt=$datadir/$actdir/5TT_coreg.mif.gz
-#csd=derivatives/dMRI_csd/sub-$sID/ses-$ssID/dhollander/csd_dhollander_wm_2tt.mif.gz
-
-csd=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/csd/dhollander/csd_dhollander_dwi_preproc_inorm_wm_2tt.mif.gz #csd=derivatives/dMRI_registration/sub-$sID/ses-$ssID/dwi/csd/csd_dhollander_wm_2tt.mif.gz
-act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/registration/dwi/act/$method-$atlas/5TT_coreg.mif.gz
+csd=$datadir/$csddir/csd_msmt_5tt_wm_2tt.mif.gz
+act5tt=$datadir/$actdir/5TT_coreg.mif.gz
 
 nbr=10M
-threads=24
+threads=10
 
 # check whether the different tools are set and load parameters
 codedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -146,16 +137,14 @@ if [ ! -f $tractdir/whole_brain_${nbr}_edit100k.tck ];then
     tckedit $tractdir/whole_brain_${nbr}.tck -number 100k $tractdir/whole_brain_${nbr}_edit100k.tck
 fi
 
-
 # SIFT-filtering of whole-brain tractogram
 if [ ! -f $tractdir/whole_brain_${nbr}_sift.tck ]; then
     count=`tckinfo $tractdir/whole_brain_$nbr.tck | grep \ count: | awk '{print $2}'`;
     count0p10=`echo "$count / 10" | bc`;
-    #tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift.tck
-    tcksift2 -act $actdir/$act5tt.mif.gz $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift2.csv
+    tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift.tck
 fi
-#if [ ! -f $tractdir/whole_brain_${nbr}_sift_edit100k.tck ];then
-#    tckedit $tractdir/whole_brain_${nbr}_sift.tck -number 100k $tractdir/whole_brain_${nbr}_sift_edit100k.tck
-#fi
+if [ ! -f $tractdir/whole_brain_${nbr}_sift_edit100k.tck ];then
+    tckedit $tractdir/whole_brain_${nbr}_sift.tck -number 100k $tractdir/whole_brain_${nbr}_sift_edit100k.tck
+fi
 
 cd $currdir

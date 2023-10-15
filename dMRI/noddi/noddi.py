@@ -53,6 +53,12 @@ amico.core.model = amico.models.NODDI()
 
 # 5. Generate the kernels corresponding to the acquisition protocol
 ae.set_model("NODDI")
+ae.model.set(
+    dPar=dPar,
+    dIso=3.0E-3,
+    IC_VFs=np.linspace(0.1,0.99,12),
+    IC_ODs=np.hstack((np.array([0.03, 0.06]),np.linspace(0.09,0.99,10))),
+    isExvivo=False)
 ae.generate_kernels(regenerate=True)
 ae.load_kernels()
 

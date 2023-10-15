@@ -1,0 +1,51 @@
+1. Examine why so many subjects have sMRI_use_for_5ttgen_mcrib equal to 0? - has to be probably changed.
+done
+
+2. In dMRI_5ttgen make sure we prefer 1 over 0.5:
+# If we have a session.tsv file, use this
+if [ -f $sessionfile ]; then
+    # Read $sessionfile and use entries to create relevant files
+    {
+	counter=0
+	read
+	while IFS= read -r line
+	do
+	    # check if the file/image has passed QC (qc_pass_fail = 4th column)
+	    QCPass=`echo "$line" | awk '{ print $4 }'`
+
+        if [ $QCPass == 1 ] || [ $QCPass  == 0.5 ] ; then
+            #### Read flags in session.tsv file with corresponding column index
+            ## Flag for use of sMRI in 5ttgen mcrib (sMRI_use_for_5ttgen_mcrib = 9th column)
+
+            #NEW CODE START
+            file=`echo "$line" | awk '{ print $3 }'`
+            echo $file
+            
+            #if has MCRIB in name then select is as the file
+            if echo "$file" | grep -q "MCRIB"; then
+                echo "IS VALID"
+                filebase=`basename $file .nii.gz`
+                filedir=`dirname $file`
+                let counter++
+                if [ ! -f $datadir/anat/$filebase.mif.gz ]; then
+                    cp $origdatadir/$filedir/$filebase.nii.gz $origdatadir/$filedir/$filebase.json $datadir/.
+                fi
+            else
+                echo "IS NOT VALID"
+            fi
+done
+
+3. revisit  sub23 sessionQC.
+
+4. Add eddy_quad instruction to get the CNR plots too (preprocess)
+
+5. rerun pipeline for 1 subject and check if it is ok
+
+6. group response function - add script, look into mrtrix documentation. 
+
+7. verify that CNR maps are created. -> check qc/quad.
+
+8. Adapt visualisation script.  - DONE. 
+
+9. Add NODDI analysis to pipeline.  - DONE.
+

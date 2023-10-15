@@ -11,14 +11,26 @@ Arguments:
   sID				Subject ID (e.g. PMR001) 
   ssID                       	Session ID (e.g. MR2)
 Options:
-  -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI_preproc/sub-sID/ses-ssID/dwi_preproc_inorm.mif.gz)
-  -mask				Mask for dMRI data (format: .mif.gz) (default: derivatives/dMRI_preproc/sub-sID/ses-ssID/mask.mif.gz)
+  -dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/preproc/dwi_preproc_inorm.mif.gz)
+  -mask				Mask for dMRI data (format: .mif.gz) (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/preproc/mask.mif.gz)
   -response			Response function (tournier or dhollander) (default: dhollander)
   -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_csd/sub-sID/ses-ssID)
   -h / -help / --help           Print usage.
 "
   exit;
 }
+#-dwi				Preprocessed dMRI data serie (format: .mif.gz) (default: derivatives/dMRI_preproc/sub-sID/ses-ssID/dwi_preproc_inorm.mif.gz)
+#-mask				Mask for dMRI data (format: .mif.gz) (default: derivatives/dMRI_preproc/sub-sID/ses-ssID/mask.mif.gz)
+
+convertsecs() 
+{
+ ((h=${1}/3600))
+ ((m=(${1}%3600)/60))
+ ((s=${1}%60))
+ printf "%02d:%02d:%02d\n" $h $m $s
+}
+
+start=`date +%s`
 
 ################ ARGUMENTS ################
 
@@ -31,11 +43,11 @@ shift; shift
 currdir=$PWD
 
 # Defaults
-datadir=derivatives/dMRI_csd/sub-$sID/ses-$ssID
-dwi=derivatives/dMRI_preproc/sub-$sID/ses-$ssID/dwi_preproc_inorm.mif.gz
-mask=derivatives/dMRI_preproc/sub-$sID/ses-$ssID/mask.mif.gz
+datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/csd # datadir=derivatives/dMRI_csd/sub-$sID/ses-$ssID
+dwi=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/preproc/dwi_preproc_inorm.mif.gz #dwi=derivatives/dMRI_preproc/sub-$sID/ses-$ssID/dwi_preproc_inorm.mif.gz
+mask=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/preproc/mask.mif.gz #mask=derivatives/dMRI_preproc/sub-$sID/ses-$ssID/mask.mif.gz
 response=dhollander
-responsedir=derivatives/dMRI_response/sub-$sID/ses-$ssID
+responsedir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/response #responsedir=derivatives/dMRI_response/sub-$sID/ses-$ssID
 dwidir=`dirname $dwi`
 
 # check whether the different tools are set and load parameters
@@ -70,15 +82,17 @@ if [ ! -d $datadir ];then mkdir -p $datadir; fi
 if [ ! -d $logdir ];then mkdir -p $logdir; fi
 
 script=`basename $0 .sh`
-echo Executing: $codedir/sMRI/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
-echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
-echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
-cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_sMRI_$script.log 2>&1
+echo Executing: $codedir/dMRI/$script.sh $command > ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
+echo "" >> ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
+echo "Printout $script.sh" >> ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
+cat $codedir/$script.sh >> ${logdir}/sub-${sID}_ses-${ssID}_dMRI_$script.log 2>&1
 echo
 
 
 ##################################################################################
 # 0. Copy files to datadir (incl .json if present at original location)
+
+dwibase=`basename $dwi .mif.gz` 
 
 for file in $dwi $mask; do
     origdir=`dirname $file`
@@ -87,21 +101,21 @@ for file in $dwi $mask; do
 
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     
-    if [ ! -f $ourdir/$filebase.mif.gz ];then
-	cp $file $outdir/.
-	if [ -f $origdir/$filebase.json ];then
-	    cp $origdir/$filebase.json $outdir/.
-	fi
+    if [ ! -f $outdir/$filebase.mif.gz ];then
+        cp $file $outdir/.
+        if [ -f $origdir/$filebase.json ];then
+            cp $origdir/$filebase.json $outdir/.
+        fi
     fi
 done
 
 for tissue in "wm" "csf" "gm"; do
-    file=$responsedir/${response}_${tissue}.txt
+    file=$responsedir/${response}_${dwibase}_${tissue}.txt
     outdir=$datadir
 
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     
-    if [ ! -f $ourdir/${response}_${tissue}.txt ];then
+    if [ ! -f $outdir/${response}_${dwibase}_${tissue}.txt ];then
 	    cp $file $outdir/.
     fi
 done
@@ -126,7 +140,7 @@ if [[ $response = tournier ]]; then
 
     if [ ! -f $csddir/CSD_${response}.mif.gz ]; then
 	echo "Estimating ODFs with CSD"
-	dwi2fod -force -mask $mask.mif.gz csd $dwi.mif.gz $csddir/${response}_response.txt $csddir/csd_${response}.mif.gz
+	dwi2fod -force -mask $mask.mif.gz csd $dwi.mif.gz $csddir/${response}_${dwibase}_response.txt $csddir/csd_${response}.mif.gz
 	echo Check results of ODFs
 	mrview -load meanb0_brain.nii.gz -odf.load_sh $csddir/csd_${response}.mif.gz -mode 2
     fi
@@ -140,18 +154,20 @@ if [[ $response = dhollander ]]; then
     # Calculate ODFs
     echo "Calculating CSD using ACT and $response"
     # model with all 3 tissue types: WM GM CSF
-    #dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $responsedir/${response}_wm.txt $csddir/csd_${response}_wm_3tt.mif.gz $responsedir/${response}_gm.txt $csddir/csd_${response}_gm_3tt.mif.gz $responsedir/${response}_csf.txt $csddir/csd_${response}_csf_3tt.mif.gz
+    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz ${response}_${dwibase}_wm.txt $csddir/csd_${response}_${dwibase}_wm_3tt.mif.gz ${response}_${dwibase}_gm.txt $csddir/csd_${response}_${dwibase}_gm_3tt.mif.gz ${response}_${dwibase}_csf.txt $csddir/csd_${response}_${dwibase}_csf_3tt.mif.gz
     # model with all 2 tissue types: WM CSF
-    #dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz $responsedir/${response}_wm.txt $csddir/csd_${response}_wm_2tt.mif.gz $responsedir/${response}_csf.txt $csddir/csd_${response}_csf_2tt.mif.gz
-    #mrview -load meanb0_brain.mif.gz -odf.load_sh $csddir/csd_${response}_wm_3tt.mif.gz -odf.load_sh $csddir/csd_${response}_wm_2tt.mif.gz -mode 2;
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz ${response}_wm.txt $csddir/csd_${response}_wm_3tt.mif.gz ${response}_gm.txt $csddir/csd_${response}_gm_3tt.mif.gz ${response}_csf.txt $csddir/csd_${response}_csf_3tt.mif.gz
-    # model with all 2 tissue types: WM CSF
-    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz ${response}_wm.txt $csddir/csd_${response}_wm_2tt.mif.gz ${response}_csf.txt $csddir/csd_${response}_csf_2tt.mif.gz
-    echo mrview -load meanb0_brain.mif.gz -odf.load_sh $csddir/csd_${response}_wm_3tt.mif.gz -odf.load_sh $csddir/csd_${response}_wm_2tt.mif.gz -mode 2;
+    dwi2fod msmt_csd -force -mask $mask.mif.gz $dwi.mif.gz ${response}_${dwibase}_wm.txt $csddir/csd_${response}_${dwibase}_wm_2tt.mif.gz ${response}_${dwibase}_csf.txt $csddir/csd_${response}_${dwibase}_csf_2tt.mif.gz
+    echo mrview -load meanb0_brain.mif.gz -odf.load_sh $csddir/csd_${response}_${dwibase}_wm_3tt.mif.gz -odf.load_sh $csddir/csd_${response}_${dwibase}_wm_2tt.mif.gz -mode 2;
 
 fi
 
 
 cd $currdir
 
-#mrview -load $dwidir/meanb0_brain.mif.gz -odf.load_sh $datadir/$csddir/csd_${response}_wm_3tt.mif.gz -odf.load_sh $datadir/$csddir/csd_${response}_wm_2tt.mif.gz -mode 2
+#mrview -load $dwidir/meanb0_brain.mif.gz -odf.load_sh $datadir/$csddir/csd_${response}_${dwibase}_wm_3tt.mif.gz -odf.load_sh $datadir/$csddir/csd_${response}_${dwibase}_wm_2tt.mif.gz -mode 2
+
+end=`date +%s`
+runtime=$((end-start))
+TIME=$(convertsecs $runtime)
+echo "Total runtime = $TIME"
+

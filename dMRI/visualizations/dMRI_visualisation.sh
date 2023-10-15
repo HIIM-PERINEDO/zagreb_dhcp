@@ -43,7 +43,7 @@ declare -A dir_mapping=(
   ["PREPROCESS"]="derivatives/dMRI_preproc/sub-$sID/ses-$ssID"
   ["RESPONSE"]="derivatives/dMRI_response/sub-$sID/ses-$ssID"
   ["CSD"]="derivatives/dMRI_csd/sub-$sID/ses-$ssID"
-  ["5TT"]="/path/to/5tt"
+  ["5TT"]="derivatives/dMRI_neonatal_5tt_mcrib/sub-$sID/ses-$ssID"
   ["REGISTRATION"]="derivatives/dMRI_registration/sub-$sID/ses-$ssID"
   ["TRACTOGRAPHY"]="derivatives/dMRI_tractography/sub-$sID/ses-$ssID"
   ["CONNECTOME"]="/path/to/connectome"
@@ -103,6 +103,9 @@ case $processing_step in
     "5TT")
         echo "Processing 5TT"
         # Add your command here
+        tt5dir=`echo "${dir_mapping[$processing_step]}"`
+
+        mrview  ${tt5dir}/sub-${sID}_ses-${ssID}_5TT.nii.gz 
     ;;
     "REGISTRATION")
         echo "Processing REGISTRATION"
