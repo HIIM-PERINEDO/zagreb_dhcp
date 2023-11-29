@@ -13,18 +13,16 @@ Arguments:
 Options:
   -csd				CSD mif.gz-file (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/csd/dhollander/csd_dhollander_wm_2tt.mif.gz)
   -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI_registration/sub-sID/ses-ssID/dwi/act/neonatal-5TT-M-CRIB/5TT_coreg.mif.gz)
-  -from
-  -to
-  -nbr				Number of streamlines in whole-brain tractogram (default: 10M)
+  -from             single integer of seed region
+  -to               single or multiple tb separated integers (THALAMUS: R: 48 L: 9 | OCCIPITAL: LEFT: 1011,1013,1021  RIGHT: 2011,2013,2021)
+  -exclude          areas to exclude (CC is 192)
+  -nbr				Number of streamlines in brain tractogram (default: 10K)
   -threads			Number of threads for parallell processing (default: 24)
-  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/tractography)
+  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI/sub-sID/ses-ssID/dwi/tractography_roi)
   -h / -help / --help           Print usage.
 "
   exit;
 }
-#  -csd				CSD mif.gz-file (default: derivatives/dMRI_csd/sub-sID/ses-ssID/csd/dhollander/csd_dhollander_wm_2tt.mif.gz)
-#  -5TT				5TT mif.gz-file in dMRI space (default: derivatives/dMRI_registration/sub-sID/ses-ssID/dwi/act/neonatal-5TT-M-CRIB/5TT_coreg.mif.gz)
-#  -d / -data-dir  <directory>   The directory used to output the preprocessed files (default: derivatives/dMRI_tractography/sub-sID/ses-ssID/dwi)
 
 ################ ARGUMENTS ################
 
@@ -45,10 +43,11 @@ tractdir=tractography/$method-$atlas
 segmentationsdir=segmentations/$method-$atlas
 from_roi=9
 to_roi=1021
+exclude_roi=192
+declare -a to_rois
+declare -a exclude_rois
+exclude_concat_rois=""
 
-#csd=$datadir/$csddir/csd_msmt_5tt_wm_2tt.mif.gz
-#act5tt=$datadir/$actdir/5TT_coreg.mif.gz
-#csd=derivatives/dMRI_csd/sub-$sID/ses-$ssID/dhollander/csd_dhollander_wm_2tt.mif.gz
 
 csd=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/csd/dhollander/csd_dhollander_dwi_preproc_inorm_wm_2tt.mif.gz #csd=derivatives/dMRI_registration/sub-$sID/ses-$ssID/dwi/csd/csd_dhollander_wm_2tt.mif.gz
 act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/registration/dwi/act/$method-$atlas/5TT_coreg.mif.gz
@@ -67,7 +66,33 @@ while [ $# -gt 0 ]; do
 	-5TT) shift; act5tt=$1; ;;
 	-nbr) shift; nbr=$1; ;;
     -from) shift; from_roi=$1; ;;
-    -to) shift; to_roi=$1; ;;
+    -to) 
+        shift; 
+        # Split the input string by comma into an array
+        IFS=',' read -ra ADDR <<< "$1"
+        for i in "${ADDR[@]}"; do
+            # Only add the item if it's a number
+            if [[ $i =~ ^[0-9]+$ ]]; then
+                to_rois+=("$i")
+            fi
+        done
+        ;;
+    -exclude)
+        shift;
+        # Split the input string by comma into an array
+        IFS=',' read -ra ADDR <<< "$1"
+        for i in "${ADDR[@]}"; do
+            # Only add the item if it's a number
+            if [[ $i =~ ^[0-9]+$ ]]; then
+                exclude_rois+=("$i")
+            fi
+            if [ -z "$exclude_concat_rois" ]; then
+                exclude_concat_rois="$i"
+            else
+                exclude_concat_rois="${exclude_concat_rois}_$i"
+            fi
+        done
+        ;;
 	-threads) shift; threads=$1; ;;
 	-d|-data-dir)  shift; datadir=$1; ;;
 	-h|-help|--help) usage; ;;
@@ -76,6 +101,12 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+echo "to_rois array contents:"
+for roi in "${to_rois[@]}"; do
+    echo "$roi"
+done
+
 
 echo "Whole-brain ACT tractography
 Subject:       $sID 
@@ -126,7 +157,7 @@ csd=`basename $csd .mif.gz`
 act5tt=`basename $act5tt .mif.gz`
 
 ##################################################################################
-# 1. Perform whole-brain tractography
+# 1. Perform roi-based tractography
 
 cd $datadir
 
@@ -146,16 +177,75 @@ fi
 
 roi_args_to=""
 roi_args_to_seg=""
-if [ -n "$to_roi" ]; then
-    #roi_args_to="$roi_args -include \$(mrcalc ${segmentations} $to_roi -eq -)"
-    origdir=`dirname $segmentations`
-    filebase=`basename $segmentations .mif.gz`
+origdir=`dirname $segmentations`
+filebase=`basename $segmentations .mif.gz`
+mask_template=""
+# First, create an initial mask set to zero
+#mask_template=$(mrcalc ${segmentationsdir}/${filebase}.mif.gz -min 0 -max 0 -)
+# Initialize a mask_template only if it does not exist before
 
+mrcalc ${segmentationsdir}/${filebase}.mif.gz 0 -mul ${segmentationsdir}/${filebase}_zero_mask.mif.gz
+mask_template=${segmentationsdir}/${filebase}_zero_mask.mif.gz
+
+# Initialize an empty string to store concatenated ROIs
+concat_rois=""
+# Loop through the to_rois array and create a union mask
+for roi in "${to_rois[@]}"; do
     roi_args_to="-include "
-    #roi_args_to_seg="mrcalc ${segmentations} $to_roi -eq -"
-    mrcalc ${segmentationsdir}/${filebase}.mif.gz $to_roi -eq $tractdir/to_${to_roi}_roi.mif.gz
-fi
-echo $roi_args_from_seg
+
+    # Concatenate ROIs
+    if [ -z "$concat_rois" ]; then
+        concat_rois="$roi"
+    else
+        concat_rois="${concat_rois}_$roi"
+    fi
+
+    # Calculate each intermediate step and store them in temporary files
+    mrcalc ${segmentationsdir}/${filebase}.mif.gz $roi -eq  ${segmentationsdir}/temp1_${roi}.mif.gz
+    mrcalc ${segmentationsdir}/temp1_${roi}.mif.gz ${mask_template} -add  $tractdir/to_${roi}_roi_union.mif.gz
+    #mrcalc ${segmentationsdir}/temp2_${roi}.mif.gz -min 1 -max 1 $tractdir/to_${roi}_roi_union.mif.gz
+
+    # Update the mask_template
+    mask_template=$tractdir/to_${roi}_roi_union.mif.gz
+
+    # Optionally remove temporary files (if you don't need them)
+    rm ${segmentationsdir}/temp1_${roi}.mif.gz
+    #rm ${segmentationsdir}/temp2_${roi}.mif.gz
+done
+
+# Rename the final union mask to include all concatenated ROIs
+mv $mask_template $tractdir/to_${concat_rois}_roi.mif.gz
+#mrview $tractdir/to_${concat_rois}_roi.mif.gz
+
+roi_args_exclude=""
+origdir=`dirname $segmentations`
+filebase=`basename $segmentations .mif.gz`
+exclude_mask_template=$tractdir/exclude_zero_mask.mif.gz
+
+# Create an initial exclude mask set to zero
+mrcalc ${segmentationsdir}/${filebase}.mif.gz 0 -mul $exclude_mask_template
+
+# Loop through the exclude_rois array and create a union mask
+for roi in "${exclude_rois[@]}"; do
+    roi_args_exclude="-exclude"
+
+    # Calculate each intermediate step and store them in temporary files
+    mrcalc ${segmentationsdir}/${filebase}.mif.gz $roi -eq ${segmentationsdir}/temp_exclude_${roi}.mif.gz
+    mrcalc ${segmentationsdir}/temp_exclude_${roi}.mif.gz $exclude_mask_template -add $tractdir/exclude_${roi}_roi_union.mif.gz
+
+    # Update the exclude_mask_template
+    exclude_mask_template=$tractdir/exclude_${roi}_roi_union.mif.gz
+
+    # Optionally remove temporary files
+    rm ${segmentationsdir}/temp_exclude_${roi}.mif.gz
+done
+
+# Rename the final union mask to include all concatenated ROIs
+mv $exclude_mask_template $tractdir/exclude_union_roi.mif.gz
+
+
+######################################################################################
+
 
 # If a gmwmi mask does not exist, then create one
 if [ ! -f $actdir/${act5tt}_gmwmi.mif.gz ];then
@@ -168,20 +258,29 @@ cutoff=0.05
 init=$cutoff # default is equal to cutoff
 maxlength=200
 minlength=2
+final_name="sub-${sID}_ses-${ssID}_tract_from_${from_roi}_to_${concat_rois}_ex_${exclude_concat_rois}_${nbr}"
 
-if [ ! -f $tractdir/roi_brain_from_${from_roi}_to_${to_roi}_$nbr.tck ];then
+if [ ! -f $tractdir/${final_name}.tck ];then
     tckgen -nthreads $threads \
 	   -cutoff $cutoff -seed_cutoff $init -minlength $minlength -maxlength $maxlength -backtrack -seed_unidirectional \
 	   -act $actdir/$act5tt.mif.gz \
-       -select $nbr $roi_args_from $tractdir/from_${from_roi}_roi.mif.gz $roi_args_to $tractdir/to_${to_roi}_roi.mif.gz \
-	   $csddir/$csd.mif.gz $tractdir/roi_brain_from_${from_roi}_to_${to_roi}_$nbr.tck
+       -select $nbr $roi_args_from $tractdir/from_${from_roi}_roi.mif.gz $roi_args_to $tractdir/to_${concat_rois}_roi.mif.gz $roi_args_exclude $tractdir/exclude_union_roi.mif.gz \
+	   $csddir/$csd.mif.gz $tractdir/${final_name}.tck
 fi     # -backtrack -seed_dynamic $csddir/$csd.mif.gz \
 
-expanded_name_temp=roi_brain_from_${from_roi}_to_${to_roi}_${nbr}
-tckmap $tractdir/roi_brain_from_${from_roi}_to_${to_roi}_$nbr.tck  -template ../registration/dwi/meanb1000_brain.nii.gz - \
-| mrcalc - $(tckinfo $tractdir/$expanded_name_temp.tck | grep " count" | cut -d':' -f2 | tr -d '[:space:]') -div - \
-| mrthreshold - -abs 0.001 -invert - | tckedit -exclude - $tractdir/roi_brain_from_${from_roi}_to_${to_roi}_${nbr}.tck $tractdir/roi_brain_from_${from_roi}_to_${to_roi}_${nbr}_filtered.tck -force
+tckmap $tractdir/${final_name}.tck  -template ../registration/dwi/meanb1000_brain.nii.gz - \
+    | mrcalc - $(tckinfo $tractdir/${final_name}.tck | grep " count" | cut -d':' -f2 | tr -d '[:space:]') -div - \
+    | mrthreshold - -abs 0.001 -invert $tractdir/${final_name}_filtered_mask.mif
+tckedit -exclude $tractdir/${final_name}_filtered_mask.mif $tractdir/${final_name}.tck $tractdir/${final_name}_filtered.tck -force
 
+mrthreshold $tractdir/${final_name}_filtered_mask.mif -invert -force $tractdir/${final_name}_filtered_mask.mif
 
+rm $tractdir/to_*.mif.gz
+rm $tractdir/from_*.mif.gz
+rm $tractdir/exclude_*.mif.gz
+echo "Gotovo"
+#OCCIPITAL: LEFT: 1011,1013,1021  RIGHT: 2011,2013,2021
 
 cd $currdir
+
+

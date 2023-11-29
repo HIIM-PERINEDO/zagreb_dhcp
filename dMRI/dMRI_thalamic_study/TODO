@@ -37,15 +37,57 @@ done
 
 3. revisit  sub23 sessionQC.
 
-4. Add eddy_quad instruction to get the CNR plots too (preprocess)
+4. Add eddy_quad instruction to get the CNR plots too (preprocess) - DONE.
 
-5. rerun pipeline for 1 subject and check if it is ok
+5. rerun pipeline for 1 subject and check if it is ok  - DONE.
 
-6. group response function - add script, look into mrtrix documentation. 
+6. group response function - add script, look into mrtrix documentation. - 
 
-7. verify that CNR maps are created. -> check qc/quad.
+7. verify that CNR maps are created. -> check qc/quad. - DONE. 
 
 8. Adapt visualisation script.  - DONE. 
 
 9. Add NODDI analysis to pipeline.  - DONE.
 
+19.10.2023.
+
+10. Save noddi input parameters when we run the script. - DONE.
+
+11. https://mrtrix.readthedocs.io/en/dev/concepts/afd_connectivity.html - read. - DONE
+
+12. separate the subject selection process into structural(exmined visually) and diffusion(maybe change to eddy_qc report?)
+
+13. Maybe reasess subjects that have dwi qc 0, but passes eddy qc - ARE WE TOO RESTRICTIVE? Try to do analysis
+
+14. Process all subjects and do eddy SQUAD analysis
+
+15. Write a script for basic statistical analysis for dMRI parameters along tracts(just V1 , whole occipital lobe,  parietal lobe)
+
+
+2.11.2023.
+
+16. Do 10M streamline tractography for both hemispheres s.t. thalamus is seed and cortex of same hemisphere is inclusion -DONE
+
+17. remove union files from trACTOGRAPHY. -DONE
+
+18. add exclusion criteria for tractography. -DONE
+    use CC, contralatera white matter, brainstem, contralateral thalamus.
+
+19. 
+cat rawdata/sub-PMR*/ses-MR2/session_QC.tsv | grep dir-AP | grep dwi.nii
+when this instructions have an 1 or 0.5 in 3rd column and in the 5th and 6th column they should have a 1 or 0.5 ( non - entry)
+- when there is a - , then we should use sbref 
+the bad b0 will be exchanged by a better from sbref
+
+20. implement oversampling
+
+21. Copy atlases to code/atlases
+
+22. Calculate parameter values along tracts viewed as mask
+
+23. calculate parameter values along tracts
+
+24. Modify dMRI_tract extraction script so it accepts only subsets, n+(originals are not necessary) -DONE
+
+
+#should the grou template response function used for all tract generations?

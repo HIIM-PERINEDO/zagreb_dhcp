@@ -287,7 +287,7 @@ fi
 mv eddy/quad ../../qc/.
 cp $scratchdir/command.txt $scratchdir/log.txt $scratchdir/eddy_*.txt $scratchdir/applytopup_*.txt $scratchdir/slspec.txt eddy/.
 mv $scratchdir/field_* $scratchdir/topup_* topup/.
-rm -rf $scratchdir 
+#rm -rf $scratchdir 
 
 cd $currdir
 

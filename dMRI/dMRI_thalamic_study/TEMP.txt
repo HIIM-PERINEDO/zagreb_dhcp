@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Define the directory to search in and the pattern to search for
+search_directory="/path/to/directory"
+search_pattern="your_pattern"
+
+# Use find to search files and grep to look for the pattern, getting the first match
+file_with_pattern=$(find "$search_directory" -type f -exec grep -l "$search_pattern" {} + | head -n 1)
+
+# Check if a file was found
+if [ ! -z "$file_with_pattern" ]; then
+    echo "Found file: $file_with_pattern"
+else
+    echo "No file found containing the pattern"
+fi

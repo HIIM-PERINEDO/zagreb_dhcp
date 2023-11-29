@@ -19,7 +19,7 @@ end=$2
 mr=MR2
 
 scripts=( "dMRI_prepare_dmri_pipeline.sh" "dMRI_preprocess.sh" "dMRI_response.sh" "dMRI_csd.sh"  "dMRI_neonatal_5tt_mcrib.sh" "dMRI_registration.sh" "dMRI_tractography.sh" "dMRI_connectome.sh" ) # 
-scripts_python=( "dMRI_noddy.py" ) 
+scripts_python=( "dMRI_noddi.py" ) 
 
 
 
@@ -49,13 +49,12 @@ for (( i=$start; i<=$end; i++ )); do
     if [ -f $script_dir/$script_file ]; then
       # If it exists, run the script
       echo "Running script $script for subject $subject_id"
-      python $script_dir/dMRI_noddy.py $subject_id $mr
+      python $script_dir/$script_file $subject_id $mr
     else
       # If it doesn't exist, print an error message
       echo "Error: script file not found: $script_file"
     fi
   done
 
-  
   
 done

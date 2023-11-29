@@ -49,6 +49,10 @@ amico.util.fsl2scheme(os.path.join(new_folder, 'DWI.bval'),
 #os.chdir(os.path.join(new_folder))
 os.chdir(new_folder)
 
+#save current script code - 
+with open(__file__, 'r') as source_file, open('parameters.txt', 'w') as output_file:
+    output_file.write(source_file.read())
+
 # 1. Setup
 amico.core.setup()
 

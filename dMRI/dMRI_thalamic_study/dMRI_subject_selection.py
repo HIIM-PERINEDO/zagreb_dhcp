@@ -1,12 +1,16 @@
 import os
 import pandas as pd
+import subprocess
+import os
 
 # Hardcoded values
 START_PMR = 1  # Starting PMR value
-END_PMR = 50  # Ending PMR value
+END_PMR = 2  # Ending PMR value
 SESSION_NAME = 'MR2'
 FILE_PATH_TEMPLATE = "rawdata/sub-PMR{}/ses-{}/session_QC.tsv"
 COLUMNS_TO_CHECK = ['dMRI_dwiAP', 'dMRI_vol_for_b0AP', 'dMRI_vol_for_b0PA'] #, 'sMRI_use_for_5ttgen_mcrib'
+
+
 
 def is_numerical(val):
     """Check if the value is numerical."""
@@ -55,6 +59,14 @@ def main():
     # Print the summary
     for pmr, conclusion in summary.items():
         print(f"PMR{pmr}", conclusion)
+        
+        currdir = subprocess.check_output(['pwd']).decode('utf-8').strip()
+        print("Currrent directory: " + str(currdir) )
+        sub_id = int(pmr[-3:])
+        print(sub_id)
+        cmd = ['bash', os.path.join( currdir , "code" , "zagreb_dhcp" , "dMRI" , "working_dMRI_only" , "dMRI_thalamic_study_full_pipeline.sh" ),
+           str(sub_id) , str(sub_id) ]
+        #subprocess.run(cmd)
 
 if __name__ == "__main__":
     main()

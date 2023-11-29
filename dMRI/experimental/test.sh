@@ -1,0 +1,1 @@
+bash code/zagreb_dhcp/dMRI/working_dMRI_only/dMRI_tractography_roi.sh PMR021 MR2 -from 9 -to 1021,1011,1013 -exclude 192,41,48,170 -nbr 100K
