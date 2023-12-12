@@ -182,6 +182,15 @@ if [ ! -z "$tractdir/$tck_file" ] && [ -f "$tractdir/$tck_file" ]; then
     # Execute tckedit command
     tckedit $tractdir/$tck_file $output_tck_file -include $tractdir/to_${concat_rois_from}_roi.mif.gz -include $tractdir/to_${concat_rois_to}_roi.mif.gz 
 
+    output_tck_file_base=`basename $output_tck_file .tck`
+    tckmap $output_tck_file  -template ../registration/dwi/meanb1000_brain.nii.gz - \
+    | mrcalc - $(tckinfo $output_tck_file | grep " count" | cut -d':' -f2 | tr -d '[:space:]') -div - \
+    | mrthreshold - -abs 0.001 -invert $tractdir/${output_tck_file_base}_filtered_mask.mif
+
+    tckedit -exclude $tractdir/${output_tck_file_base}_filtered_mask.mif $output_tck_file $tractdir/${output_tck_file_base}_filtered.tck -force
+
+    mrthreshold $tractdir/${output_tck_file_base}_filtered_mask.mif -invert -force $tractdir/${output_tck_file_base}_filtered_mask.mif
+
     rm $tractdir/*union.mif.gz
     rm $tractdir/to*.mif.gz
     rm $tractdir/*_zero_mask.mif.gz

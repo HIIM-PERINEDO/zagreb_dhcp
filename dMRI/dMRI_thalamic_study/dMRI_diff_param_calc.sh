@@ -11,6 +11,9 @@ SESSION=$2
 PARAMETER=$3
 
 param_file=""
+PARAM_FILE=""
+basic_dwi_params_folder="derivatives/dMRI/sub-${SUBJECT}/ses-${SESSION}/dwi/preproc"
+
 # Check if PARAMETER is either MD or FA
 if [ "$PARAMETER" != "ADC" ] && [ "$PARAMETER" != "FA" ]; then
     echo "Error: PARAMETER must be either MD or FA"
@@ -18,13 +21,15 @@ if [ "$PARAMETER" != "ADC" ] && [ "$PARAMETER" != "FA" ]; then
 fi
 if [ "$PARAMETER" == "ADC" ] ; then
     param_file="adc"
+    PARAM_FILE="$basic_dwi_params_folder/${param_file}.mif.gz"
 fi
 if [ "$PARAMETER" == "FA" ] ; then
     param_file="fa"
+    PARAM_FILE="$basic_dwi_params_folder/${param_file}.mif.gz"
 fi
 
 # Define the parameter file path based on the PARAMETER argument
-PARAM_FILE="derivatives/dMRI/sub-${SUBJECT}/ses-${SESSION}/dwi/preproc/${param_file}.mif.gz"
+
 
 # Check if the parameter file exists
 if [ ! -f "$PARAM_FILE" ]; then
@@ -33,7 +38,7 @@ if [ ! -f "$PARAM_FILE" ]; then
 fi
 
 # Loop through all mask files and run the fslstats command
-for MASK_FILE in derivatives/dMRI/sub-${SUBJECT}/ses-${SESSION}/dwi/tractography_roi_multiple/tractography/neonatal-5TT-M-CRIB/*_mask.nii.gz; do
+for MASK_FILE in derivatives/dMRI/sub-${SUBJECT}/ses-${SESSION}/dwi/tractography_roi/tractography/neonatal-5TT-M-CRIB/*_mask.nii.gz; do
     # Check if mask file exists
     if [ ! -f "$MASK_FILE" ]; then
         echo "No mask files found in derivatives/sub-${SUBJECT}/${SESSION}/"

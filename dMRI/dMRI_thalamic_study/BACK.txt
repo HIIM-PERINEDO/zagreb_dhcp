@@ -1,7 +1,0 @@
-# Check if the correct number of arguments is provided
-if len(sys.argv) != 3:
-    print("Usage: script_name.py <subject_name> <session_name>")
-    sys.exit()
-
-# Store the arguments in the desired variables
-subject_name, session_name = sys.argv[1], sys.argv[2]

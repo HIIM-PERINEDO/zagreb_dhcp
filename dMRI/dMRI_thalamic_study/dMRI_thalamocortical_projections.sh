@@ -48,7 +48,22 @@ parcel_colors["right_primary_visual_cortex"]="0,128,0" #"lime"
 sID=PMR001
 ssID=MR2
 
-nbr=1M
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 arg1 arg2"
+    echo "Description: This script requires exactly two arguments: PMRxyz anr MRx"
+    exit 1
+else
+    # Assign arguments to variables
+    sID="$1"
+    ssID="$2"
+    
+    echo "Argument 1: $sID"
+    echo "Argument 2: $ssID"
+
+    # Your script logic goes here
+fi
+
+nbr=10M
 
 # Path to the extraction script
 codedir=code/zagreb_dhcp
@@ -100,7 +115,7 @@ for parcel in "${!cortical_parcels[@]}"; do
     bash $tract_extraction_script $sID $ssID -rois_from "$from_roi" -rois_to "$rois" -nbr $nbr -file "$datadir/$tractdir/${file_with_pattern}"
 
     
-    output_tck_file="$datadir/$tractdir/sub-${sID}_ses-${ssID}_${from_roi}_${rois_for_filename}_${nbr}_subset.tck"
+    output_tck_file="$datadir/$tractdir/sub-${sID}_ses-${ssID}_${from_roi}_${rois_for_filename}_${nbr}_subset_filtered.tck"
     #output_tck_file="$datadir/$tractdir/roi_brain_from_${from_roi}_to_${all_parcels//,/_}_$nbr_${rois_for_filename}_subset.tck"
     # Store the tck file name
     tck_files+=("$output_tck_file")

@@ -124,9 +124,9 @@ if [ ! $sessionfile == "No_sessionfile" ]; then
             dwiAP=`echo "$line" | awk '{ print $6 }'`
             if [ $dwiAP == 1 ] ; then		    
                 if [ ! -f $datadir/dwiAP.mif.gz ]; then 
-                mrconvert -json_import $inputfilesdir/$filedir/$filebase.json \
-                    -fslgrad $inputfilesdir/$filedir/$filebase.bvec $inputfilesdir/$filedir/$filebase.bval \
-                    $inputfilesdir/$filedir/$filebase.nii.gz $datadir/dwiAP.mif.gz
+                    mrconvert -json_import $inputfilesdir/$filedir/$filebase.json \
+                        -fslgrad $inputfilesdir/$filedir/$filebase.bvec $inputfilesdir/$filedir/$filebase.bval \
+                        $inputfilesdir/$filedir/$filebase.nii.gz $datadir/dwiAP.mif.gz
                 fi
             fi		
             ## b0AP and b0PA data
@@ -135,15 +135,23 @@ if [ ! $sessionfile == "No_sessionfile" ]; then
                 b0APvol=$volb0AP #Remember this to later!!
                 echo $b0APvol
                 if [ ! -f $datadir/b0AP.mif.gz ]; then
-                mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json - | \
-                    mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/topup/b0AP.mif.gz
+                    dimensions=`mrinfo -ndim $inputfilesdir/$filedir/$filebase.nii.gz`
+                    echo "Input dimension of file for b0AP:"
+                    echo $dimensions
+                    if [ $dimensions == 3 ]; then 
+                        #input image is 3D
+                        mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json $datadir/topup/b0AP.mif.gz
+                    else #input is 4D
+                        mrconvert $inputfilesdir/$filedir/$filebase.nii.gz -json_import $inputfilesdir/$filedir/$filebase.json - | \
+                            mrconvert -coord 3 $volb0AP -axes 0,1,2 - $datadir/topup/b0AP.mif.gz
+                    fi
                 fi
             fi
             volb0PA=`echo "$line" | awk '{ print $8 }'`
             if [ ! $volb0PA == "-" ]; then
                 if [ ! -f $datadir/b0PA.mif.gz ]; then
                     dimensions=`mrinfo -ndim $inputfilesdir/$filedir/$filebase.nii.gz`
-                    echo "Input dimension of PA:"
+                    echo "Input dimension of file for b0PA:"
                     echo $dimensions
                     if [ $dimensions == 3 ]; then 
                         #input image is 3D

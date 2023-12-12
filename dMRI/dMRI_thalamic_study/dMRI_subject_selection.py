@@ -64,7 +64,7 @@ def main():
         print("Currrent directory: " + str(currdir) )
         sub_id = int(pmr[-3:])
         print(sub_id)
-        cmd = ['bash', os.path.join( currdir , "code" , "zagreb_dhcp" , "dMRI" , "working_dMRI_only" , "dMRI_thalamic_study_full_pipeline.sh" ),
+        cmd = ['bash', os.path.join( currdir , "code" , "zagreb_dhcp" , "dMRI" , "pipeline" , "dMRI_thalamic_study_full_pipeline.sh" ),
            str(sub_id) , str(sub_id) ]
         #subprocess.run(cmd)
 

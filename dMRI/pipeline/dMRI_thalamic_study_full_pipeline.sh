@@ -17,7 +17,7 @@ script_dir=$(dirname "$0")
 start=$1
 end=$2
 mr=MR2
-nbr=1M
+nbr=10M
 tractography_type=FROM_THALAMUS_TO_WHOLE_HEMISPHERE
 from_args=( )
 # 9 is LeftThalamus, 48 is RightThalamus
@@ -64,16 +64,16 @@ scripts_python=( "dMRI_noddi.py" )
 scripts_bash=( "dMRI_prepare_dmri_pipeline.sh" "dMRI_preprocess.sh" "dMRI_response.sh" "dMRI_csd.sh"  "dMRI_neonatal_5tt_mcrib.sh" "dMRI_registration.sh" )
 scripts_bash_additional_args=( "" "" "" ""  "" "" )
 # Loop through the array and print each element along with its index
-for ((i=0; i<${#from_args[@]}; i++)); do
-    #echo "Index: $i, Element: ${scripts_bash[$i]}"
-    scripts_bash+=("dMRI_tractography_roi.sh")
-    temp_str="-from ${from_args[$i]} -to ${to_args[$i]} -exclude ${exclude_args[$i]} -nbr ${nbr}"
+#for ((i=0; i<${#from_args[@]}; i++)); do
+#    #echo "Index: $i, Element: ${scripts_bash[$i]}"
+#    scripts_bash+=("dMRI_tractography_roi.sh")
+#    temp_str="-from ${from_args[$i]} -to ${to_args[$i]} -exclude ${exclude_args[$i]} -nbr ${nbr}"
     #echo $temp_str
-    scripts_bash_additional_args+=( "$temp_str" )
-done
+#    scripts_bash_additional_args+=( "$temp_str" )
+#done
 
 scripts_bash+=("dMRI_tractography.sh")
-scripts_bash_additional_args+=(" -nbr 1M")
+scripts_bash_additional_args+=(" -nbr 10M")
 
 scripts_bash+=("dMRI_connectome.sh")
 scripts_bash_additional_args+=("")
@@ -92,17 +92,6 @@ fi
 for (( i=$start; i<=$end; i++ )); do
   # Construct the subject ID (e.g. PMR001)
   subject_id=$(printf "PMR%03d" $i)
-  
-  #for script_file in ${scripts_bash[@]}; do
-  #  if [ -f $script_dir/$script_file ]; then
-  #    # If it exists, run the script
-  #    echo "Running script $script_file for subject $subject_id"
-  #    bash $script_dir/$script_file $subject_id $mr
-  #  else
-  #    # If it doesn't exist, print an error message
-  #    echo "Error: script file not found: $script_file"
-  #  fi
-  #done
 
   for ((j=0; j<${#scripts_bash[@]}; j++)); do
     if [ -f $script_dir/${scripts_bash[$j]}  ]; then
@@ -119,7 +108,7 @@ for (( i=$start; i<=$end; i++ )); do
     if [ -f $script_dir/$script_file ]; then
       # If it exists, run the script
       echo "Running script $script_file for subject $subject_id"
-      #python $script_dir/$script_file $subject_id $mr
+      python $script_dir/$script_file $subject_id $mr
     else
       # If it doesn't exist, print an error message
       echo "Error: script file not found: $script_file"

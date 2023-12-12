@@ -44,7 +44,8 @@ currdir=$PWD
 # Defaults
 origdatadir=derivatives/dMRI/sub-$sID/ses-$ssID    #rawdata/sub-$sID/ses-$ssID
 sessionfile=$origdatadir/session_QC.tsv
-MCRIBpath=/home/perinedo/Projects/Atlases/M-CRIB/M-CRIB_for_MRtrix_5ttgen_neonatal
+atlasdir=code/atlases/M-CRIB/M-CRIB_for_MRtrix_5ttgen_neonatal
+MCRIBpath=$currdir/$atlasdir     #/home/perinedo/Projects/Atlases/M-CRIB/M-CRIB_for_MRtrix_5ttgen_neonatal
 datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/neonatal_5tt_mcrib #datadir=derivatives/dMRI_neonatal_5tt_mcrib/sub-$sID/ses-$ssID
 threads=24
 

@@ -81,13 +81,21 @@ the bad b0 will be exchanged by a better from sbref
 
 20. implement oversampling
 
-21. Copy atlases to code/atlases
+21. Copy atlases to code/atlases - DONE.
 
-22. Calculate parameter values along tracts viewed as mask
+22. Calculate parameter values along tracts viewed as mask - DONE.  add that it stores the results as a csv file
 
-23. calculate parameter values along tracts
+23. calculate parameter values along tracts:
+Assigning Diffusion Metrics to Tracts: You can use the tcksample command to sample various diffusion metrics along the streamlines. For example, to sample FA values along a tract, you would do something like:
+
+bash
+Copy code
+tcksample tracts.tck fa.mif fa_values_per_streamline.txt
+Analyzing Diffusion Metrics Along the Tract: The output from tcksample can be further analyzed to compute average values or to perform statistical analysis. This often involves custom scripts or using tools like tckstats.
 
 24. Modify dMRI_tract extraction script so it accepts only subsets, n+(originals are not necessary) -DONE
 
+25. do the filtering on the SPECIFIC thalamocortical tract we are interested in.!   - DONE
 
 #should the grou template response function used for all tract generations?
+

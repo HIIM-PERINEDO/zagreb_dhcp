@@ -143,7 +143,7 @@ case $processing_step in
     "CONNECTOME")
         echo "Processing CONNECTOME"
         # Add your command here
-        python $PWD/code/zagreb_dhcp/dMRI/working_dMRI_only/heatmap_plotting.py $sID $ssID
+        python $PWD/code/zagreb_dhcp/dMRI/pipeline/heatmap_plotting.py $sID $ssID
     ;;
     *)
         echo "Invalid processing_step: $processing_step"
