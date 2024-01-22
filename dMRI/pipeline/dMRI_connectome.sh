@@ -103,7 +103,7 @@ echo
 ## 0. Copy to files to relevant locations
 
 tractbase=`basename $tract .tck`
-tractssift2=${tractbase}_sift2.csv
+tractssift2=${tractbase}_sift2.txt
 
 # Tractogram will go into tractography folder
 tractdir=tractography

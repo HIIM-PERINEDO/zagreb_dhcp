@@ -79,7 +79,7 @@ when this instructions have an 1 or 0.5 in 3rd column and in the 5th and 6th col
 - when there is a - , then we should use sbref 
 the bad b0 will be exchanged by a better from sbref
 
-20. implement oversampling
+20. implement oversampling. -should be after response and before csd. Do it.
 
 21. Copy atlases to code/atlases - DONE.
 
@@ -99,3 +99,32 @@ Analyzing Diffusion Metrics Along the Tract: The output from tcksample can be fu
 
 #should the grou template response function used for all tract generations?
 
+26. Check if the current df saving routine for pandas is ok with loading from csv file.
+
+27. Check the visualisation script that there is everything fine. Has anything to be added? Maybe the overlaps of noddi or something similar?
+
+28. Make sure you don't use the filtering on already filtered tractogram. - DONE.
+
+29. Fix teamviewer issu - DONE.
+Are there thalamo-striate connections that run in the medial aspect of the lateral ventricle?
+Are there any other thalamo-striate connections apart from the geniculo-striate projections?
+What happens if we filter harder, with 1 % instead of 0.1 %?
+Can we implement a tract-based parcellation of the thalamus?
+Can we implement alternative ways of filtering the tractograms? Like Wilson et al with 80 % on TDI maps.
+
+30. First we do the preprocessing step for all subjects -> then we do the squad analysis and select which subjects go into the pipeline ->
+-> calculate individual response functions for all subjects -> calculate group response function (downstream scripts should point to this group response) -> downstream tasks
+
+For this change the for loop for iteration so the outer loop are the steps and the inner are subjects
+
+31.until tomorrow do the thalamocortical projection filtering for 10M and do the 100M whole brain tractography with filtering -DONE.
+
+32. First paper should be correlation of thalamocortical connection strength to GA.(STPO) -try to correlate it with SS scoring system(should be affected in parietal region)
+How to filter the extracted tracts: Extract tract based on ROI -> make track density image(TDI) and filter it based on threshold
+https://community.mrtrix.org/t/segment-tracts-from-tdi/1956
+"It also sounds as though you are strictly looking for a binary mask corresponding to the spatial extent of a particular bundle, as opposed to the streamlines themselves?
+
+If this is the case, then the “simplest” approach is to extract streamlines of interest from the whole-brain tractogram (application of SIFT is not hugely influential in this context), generate a TDI from the extracted streamlines, and then apply a threshold to produce a binary mask."
+extract -> tckmap -> mrthreshold
+
+33. Make lookup tables for mapping and lobar for MCRIB2.0 atlas

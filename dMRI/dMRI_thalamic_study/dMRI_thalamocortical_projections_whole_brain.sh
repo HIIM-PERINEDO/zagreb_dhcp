@@ -63,16 +63,16 @@ else
     # Your script logic goes here
 fi
 
-nbr=10M
+nbr=100M
 
 # Path to the extraction script
 codedir=code/zagreb_dhcp
-tract_extraction_script=$codedir/dMRI/dMRI_thalamic_study/dMRI_tract_extraction.sh
+tract_extraction_script=$codedir/dMRI/dMRI_thalamic_study/dMRI_tract_extraction_whole_brain.sh
 
 method=neonatal-5TT #DrawEM 
 atlas="M-CRIB" #ALBERT 
 act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/registration/dwi/act/$method-$atlas/5TT_coreg.mif.gz
-datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/tractography_roi #datadir=derivatives/dMRI_tractography/sub-$sID/ses-$ssID
+datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/tractography #datadir=derivatives/dMRI_tractography/sub-$sID/ses-$ssID
 #datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/tractography
 actdir=act/$method-$atlas
 tractdir=tractography/$method-$atlas
@@ -101,25 +101,18 @@ for parcel in "${!cortical_parcels[@]}"; do
         all_parcels=$all_parcels_right_hemisphere
     fi
 
-    # Call the previous script with necessary arguments
-    #bash code/zagreb_dhcp/dMRI/dMRI_thalamic_study/dMRI_tract_extraction.sh PMR001 MR2 -from 9 -to 1011,1013,1021 -to_subset 1021 -nbr 10K
-    #output_tck_file="$tractdir/roi_brain_from_${from_roi}_to_${concat_rois}_$nbr_${concat_rois_subset}_subset.tck"
-    
-    #search_pattern="*${from_roi}*${rois_for_filename}*_filtered.tck"
-
-    # Use find to search files and grep to look for the pattern, getting the first match
-    #file_with_pattern=$(find "$datadir/$tractdir" -type f -exec grep -l "*${from_roi}*${rois_for_filename}*_filtered.tck" {} + | head -n 1)
-
     #FILTERING HAS TO BE DONE ON ORIGINAL THALAMOCORTICAL PROJECTIONS!!!!!
-    file_with_pattern=$(find "$datadir/$tractdir" -type f -name "*${from_roi}*${all_parcels//,/_}*${nbr}.tck" -print | head -n 1)
-    #file_with_pattern=$(find "$datadir/$tractdir" -type f -name "*whole_brain*${nbr}.tck" -print | head -n 1)
-    #echo ${file_with_pattern}
+    #file_with_pattern=$(find "$datadir/$tractdir" -type f -name "*${from_roi}*${all_parcels//,/_}*${nbr}.tck" -print | head -n 1)
+    file_with_pattern=$(find "$datadir/$tractdir" -type f -name "whole_brain_${nbr}.tck" -print | head -n 1) #_sift2
+    echo ${file_with_pattern}
     
+    output_tck_file="$datadir/$tractdir/whole_brain_${nbr}_sift2_${from_roi}_${rois_for_filename}_subset_filtered.tck"
+    output_tck_file_basename=`basename $output_tck_file .tck`
 
-    bash $tract_extraction_script $sID $ssID -rois_from "$from_roi" -rois_to "$rois" -nbr $nbr -file "$datadir/$tractdir/${file_with_pattern}"
+    bash $tract_extraction_script $sID $ssID -rois_from "$from_roi" -rois_to "$rois" -nbr $nbr -file "${file_with_pattern}"  -o "$output_tck_file_basename.tck"
 
     
-    output_tck_file="$datadir/$tractdir/sub-${sID}_ses-${ssID}_${from_roi}_${rois_for_filename}_${nbr}_subset_filtered.tck"
+    #output_tck_file="$datadir/$tractdir/whole_brain_${nbr}_sift2_${from_roi}_${rois_for_filename}_subset_filtered.tck"
     #output_tck_file="$datadir/$tractdir/roi_brain_from_${from_roi}_to_${all_parcels//,/_}_$nbr_${rois_for_filename}_subset.tck"
     # Store the tck file name
     tck_files+=("$output_tck_file")

@@ -1,15 +1,11 @@
-#!/bin/bash
+# Path to the SIFT2 weights file
+weights_file="sift2_weights.txt"
 
-# Define the directory to search in and the pattern to search for
-search_directory="/path/to/directory"
-search_pattern="your_pattern"
+# Command to count the number of non-zero weights (i.e., streamlines retained after SIFT2)
+num_streamlines=$(awk '$1 > 0' "$weights_file" | wc -l)
 
-# Use find to search files and grep to look for the pattern, getting the first match
-file_with_pattern=$(find "$search_directory" -type f -exec grep -l "$search_pattern" {} + | head -n 1)
+# Store the result in a variable
+final_streamline_count=$num_streamlines
 
-# Check if a file was found
-if [ ! -z "$file_with_pattern" ]; then
-    echo "Found file: $file_with_pattern"
-else
-    echo "No file found containing the pattern"
-fi
+# Output the result
+echo "Final number of streamlines after SIFT2: $final_streamline_count"

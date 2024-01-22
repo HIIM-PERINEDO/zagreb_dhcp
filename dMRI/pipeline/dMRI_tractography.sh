@@ -42,6 +42,7 @@ datadir=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/tractography #datadir=derivative
 actdir=act/$method-$atlas
 csddir=csd/$method-$atlas
 tractdir=tractography/$method-$atlas
+segmentationsdir=segmentations/$method-$atlas
 
 #csd=$datadir/$csddir/csd_msmt_5tt_wm_2tt.mif.gz
 #act5tt=$datadir/$actdir/5TT_coreg.mif.gz
@@ -49,6 +50,7 @@ tractdir=tractography/$method-$atlas
 
 csd=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/csd/dhollander/csd_dhollander_dwi_preproc_inorm_wm_2tt.mif.gz #csd=derivatives/dMRI_registration/sub-$sID/ses-$ssID/dwi/csd/csd_dhollander_wm_2tt.mif.gz
 act5tt=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/registration/dwi/act/$method-$atlas/5TT_coreg.mif.gz
+segmentations=derivatives/dMRI/sub-$sID/ses-$ssID/dwi/registration/dwi/parcellation/neonatal-5TT-M-CRIB/segmentations/Structural_Labels_coreg.mif.gz
 
 nbr=10M
 threads=24
@@ -97,12 +99,13 @@ echo
 ##################################################################################
 # 0. Copy to files to datadir (incl .json if present at original location)
 
-for file in $csd $act5tt; do
+for file in $csd $act5tt $segmentations; do
     origdir=`dirname $file`
     filebase=`basename $file .mif.gz`
     
     if [[ $file = $csd ]];then outdir=$datadir/$csddir;fi
     if [[ $file = $act5tt ]];then outdir=$datadir/$actdir;fi
+    if [[ $file = $segmentations ]];then outdir=$datadir/$segmentationsdir;fi
     if [ ! -d $outdir ]; then mkdir -p $outdir; fi
     
     if [ ! -f $outdir/$filebase.mif.gz ];then
@@ -142,20 +145,27 @@ if [ ! -f $tractdir/whole_brain_${nbr}.tck ];then
 	   -select $nbr \
 	   $csddir/$csd.mif.gz $tractdir/whole_brain_$nbr.tck
 fi
-if [ ! -f $tractdir/whole_brain_${nbr}_edit100k.tck ];then
-    tckedit $tractdir/whole_brain_${nbr}.tck -number 100k $tractdir/whole_brain_${nbr}_edit100k.tck
-fi
+
+#if [ ! -f $tractdir/whole_brain_${nbr}_edit100k.tck ];then
+#    tckedit $tractdir/whole_brain_${nbr}.tck -number 100k $tractdir/whole_brain_${nbr}_edit100k.tck
+#fi
 
 
 # SIFT-filtering of whole-brain tractogram
-if [ ! -f $tractdir/whole_brain_${nbr}_sift.tck ]; then
+if [ ! -f $tractdir/whole_brain_${nbr}_sift2.tck ]; then
     count=`tckinfo $tractdir/whole_brain_$nbr.tck | grep \ count: | awk '{print $2}'`;
-    count0p10=`echo "$count / 10" | bc`;
+    #count0p10=`echo "$count / 10" | bc`;
+    echo "Start number of streamlines before SIFT2: $count"
     #tcksift -act $actdir/$act5tt.mif.gz -term_number $count0p10 $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift.tck
-    tcksift2 -act $actdir/$act5tt.mif.gz $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift2.csv
+    tcksift2 $tractdir/whole_brain_$nbr.tck $csddir/$csd.mif.gz $tractdir/whole_brain_${nbr}_sift2.txt -act $actdir/$act5tt.mif.gz  #-out_mu $tractdir/whole_brain_${nbr}_sift2_mu.txt
+
+    #tckedit $tractdir/whole_brain_$nbr.tck $tractdir/whole_brain_${nbr}_sift2.tck -tck_weights_in $tractdir/whole_brain_${nbr}_sift2.txt
+
+    #final_streamline_count=`tckinfo $tractdir/whole_brain_${nbr}_sift2.tck | grep \ count: | awk '{print $2}'`;
+    
+    # Output the result
+    #echo "Final number of streamlines after SIFT2: $final_streamline_count"
 fi
-#if [ ! -f $tractdir/whole_brain_${nbr}_sift_edit100k.tck ];then
-#    tckedit $tractdir/whole_brain_${nbr}_sift.tck -number 100k $tractdir/whole_brain_${nbr}_sift_edit100k.tck
-#fi
+
 
 cd $currdir
